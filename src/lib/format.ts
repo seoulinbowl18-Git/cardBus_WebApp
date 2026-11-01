@@ -1,0 +1,18 @@
+const rupiah = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
+
+export const formatRupiah = (n: number) => rupiah.format(n);
+
+export const formatDate = (iso: string) =>
+  new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(
+    new Date(iso.length === 10 ? `${iso}T00:00:00+07:00` : iso),
+  );
+
+export const formatDuration = (minutes: number) => {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m ? `${h}j ${m}m` : `${h}j`;
+};
+
+/** Tanggal hari ini (WIB) dalam format YYYY-MM-DD. */
+export const todayWib = () =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());

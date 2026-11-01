@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+/* Palet resmi CardBus, sama dengan lib/theme/app_colors.dart di aplikasi mobile. */
+@theme {
+  --color-brand: #087f78; /* teal */
+  --color-brand-dark: #064e52; /* darkTeal */
+  --color-gold: #ffc247;
+  --color-ink: #13272b;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  @apply bg-[#f4f7f7] text-ink antialiased;
+}
