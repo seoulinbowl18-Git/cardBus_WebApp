@@ -45,14 +45,16 @@ webapp/
     │   ├── layout.tsx      # font Plus Jakarta Sans, header, AuthProvider
     │   ├── page.tsx        # beranda: form cari jadwal
     │   ├── cari/           # hasil pencarian (Server Component, GET /api/trips)
+    │   ├── checkout/       # pilih varian & kursi, penumpang, kontak, metode bayar
     │   ├── masuk/          # login OTP WhatsApp
     │   ├── pesanan/        # Tiket Saya + detail/pembayaran (polling status)
     │   └── akun/           # profil
-    ├── components/         # SiteHeader, TripCard, RequireAuth
+    ├── components/         # SiteHeader, TripCard, SeatPicker, RequireAuth
     ├── lib/
     │   ├── config.ts       # baca env
     │   ├── types.ts        # tipe data sesuai respons backend
     │   ├── format.ts       # Rupiah, tanggal WIB
+    │   ├── seats.ts        # urut/kelompok kursi, validasi kontak
     │   └── api/
     │       ├── client.ts   # fetch wrapper: base URL, Bearer JWT, timeout, ApiError
     │       └── endpoints.ts# authApi, userApi, tripApi, orderApi
@@ -68,12 +70,13 @@ webapp/
 | Login Google | `POST /api/auth/google` (`idToken` Firebase) — UI belum dibuat |
 | Profil | `GET/PUT /api/user/profile` |
 | Cari jadwal | `GET /api/trips?from&to&date` |
-| Buat pesanan + tagihan | `POST /api/payments/create` — UI checkout belum dibuat |
+| Buat pesanan + tagihan | `POST /api/payments/create` (halaman `/checkout`) |
 | Status / daftar pesanan | `GET /api/orders/:id`, `GET /api/orders` |
 
 ## Belum dikerjakan (langkah berikutnya)
 
-- Halaman checkout: pilih varian & kursi, data penumpang, kontak, metode bayar → `orderApi.create`.
+- Denah kursi lengkap: `GET /api/trips` baru mengirim `freeSeats`, jadi checkout hanya menampilkan kursi kosong.
+  Jika backend juga mengirim `seats` (susunan lengkap per varian), `SeatPicker` otomatis menampilkan kursi terisi.
 - Login Google: pasang Firebase Web SDK (project `cardbus-d6aa5`), kirim ID token ke `authApi.google`.
 - Foto, fasilitas, dan denah kursi bus masih berasal dari data lokal di mobile (`MockData`), belum ada di API.
 - Token disimpan di `localStorage` (sama seperti mobile menyimpan sesi). Untuk keamanan lebih,

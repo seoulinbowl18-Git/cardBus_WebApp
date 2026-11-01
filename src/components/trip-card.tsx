@@ -26,7 +26,10 @@ export function TripCard({ trip }: { trip: Trip }) {
           <p className="text-slate-500">{trip.dropPoint}</p>
         </div>
       </div>
-      <p className="mt-3 text-xs text-slate-500">{free} kursi tersedia</p>
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-xs text-slate-500">{free} kursi tersedia</p>
+        {free > 0 && <span className="text-sm font-semibold text-brand">Pilih kursi →</span>}
+      </div>
     </article>
   );
 }

@@ -41,8 +41,13 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       {!error && trips.length === 0 && <p className="text-slate-500">Belum ada jadwal untuk rute dan tanggal ini.</p>}
       <div className="grid gap-3">
         {trips.map((t) => (
-          // TODO: halaman checkout (pilih kursi, penumpang, metode bayar -> orderApi.create)
-          <TripCard key={`${t.id}-${t.date}`} trip={t} />
+          <Link
+            key={`${t.id}-${t.date}`}
+            href={`/checkout?${new URLSearchParams({ tripId: t.id, from, to, date })}`}
+            className="block rounded-2xl transition hover:ring-2 hover:ring-brand"
+          >
+            <TripCard trip={t} />
+          </Link>
         ))}
       </div>
     </section>
