@@ -41,6 +41,7 @@ export interface SeatTier {
   price: number;
   oldPrice?: number | null;
   freeSeats: string[];
+  /** Denah lengkap varian (kosong + terisi). */
   seats?: string[];
 }
 
@@ -59,6 +60,11 @@ export interface Trip {
   boardPoint: string;
   dropPoint: string;
   tiers: SeatTier[];
+  /** URL foto & logo bus (null jika PO belum punya). Opsional: backend versi lama belum mengirim. */
+  image?: string | null;
+  logo?: string | null;
+  /** Kode fasilitas: ac, toilet, selimut, usb, legrest, makan, tv, kompartemen. */
+  facilities?: string[];
 }
 
 export interface TripSearchQuery {

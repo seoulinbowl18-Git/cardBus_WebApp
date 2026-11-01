@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { BusPhoto, PoLogo } from '@/components/bus-photo';
+import { FacilityChips } from '@/components/facility-chips';
 import { SeatPicker } from '@/components/seat-picker';
 import { ApiError } from '@/lib/api/client';
 import { orderApi, tripApi } from '@/lib/api/endpoints';
@@ -163,22 +165,31 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier }: Prop
     <form onSubmit={submit} noValidate className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <div className="space-y-6">
         {/* Ringkasan jadwal */}
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <div className="flex justify-between gap-4">
-            <div>
-              <h2 className="font-bold">{trip.poName}</h2>
-              <p className="text-sm text-slate-500">{trip.busClass}</p>
+        <div className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:flex-row">
+          <BusPhoto src={trip.image} alt={trip.poName} className="h-32 w-full shrink-0 rounded-xl sm:h-24 sm:w-36" />
+          <div className="flex-1 space-y-1">
+            <div className="flex justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <PoLogo src={trip.logo} alt={trip.poName} />
+                  <h2 className="font-bold">{trip.poName}</h2>
+                </div>
+                <p className="text-sm text-slate-500">{trip.busClass}</p>
+              </div>
+              <Link href={`/cari?${new URLSearchParams({ from, to, date })}`} className="text-sm text-brand">
+                Ganti jadwal
+              </Link>
             </div>
-            <Link href={`/cari?${new URLSearchParams({ from, to, date })}`} className="text-sm text-brand">
-              Ganti jadwal
-            </Link>
+            <p className="text-sm">
+              {formatDate(date)} · <b>{trip.depart}</b> → <b>{trip.arrive}</b> ({formatDuration(trip.durationMinutes)})
+            </p>
+            <p className="text-sm text-slate-500">
+              Naik di {trip.boardPoint} · Turun di {trip.dropPoint}
+            </p>
+            <div className="pt-1">
+              <FacilityChips codes={trip.facilities} />
+            </div>
           </div>
-          <p className="mt-3 text-sm">
-            {formatDate(date)} · <b>{trip.depart}</b> → <b>{trip.arrive}</b> ({formatDuration(trip.durationMinutes)})
-          </p>
-          <p className="text-sm text-slate-500">
-            Naik di {trip.boardPoint} · Turun di {trip.dropPoint}
-          </p>
         </div>
 
         {/* 1. Varian & kursi */}

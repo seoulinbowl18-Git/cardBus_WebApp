@@ -16,15 +16,34 @@ export function sortSeats(seats: string[]): string[] {
   });
 }
 
-/** Kelompokkan per baris (angka di depan). Kursi tanpa pola baris masuk grup "Lainnya". */
-export function groupSeatRows(seats: string[]): { row: string; seats: string[] }[] {
-  const rows = new Map<string, string[]>();
-  for (const s of sortSeats(seats)) {
-    const key = SEAT_RE.exec(s)?.[1] ?? 'Lainnya';
-    if (!rows.has(key)) rows.set(key, []);
-    rows.get(key)!.push(s);
+const LAYOUT_RE = /^(\d+)([A-Z])$/;
+
+/**
+ * Susun denah seperti SeatMap di mobile: kode "<baris><huruf>" per baris, huruf < C di kiri
+ * lorong, C ke atas di kanan. Kode lain (mis. K1) masuk `others` (ditaruh di atas denah).
+ */
+export function parseLayout(seats: string[]) {
+  const rows = new Map<number, Record<string, string>>();
+  const letters = new Set<string>();
+  const others: string[] = [];
+  for (const code of seats) {
+    const m = LAYOUT_RE.exec(code);
+    if (!m) {
+      others.push(code);
+      continue;
+    }
+    const r = Number(m[1]);
+    if (!rows.has(r)) rows.set(r, {});
+    rows.get(r)![m[2]] = code;
+    letters.add(m[2]);
   }
-  return [...rows].map(([row, list]) => ({ row, seats: list }));
+  const sorted = [...letters].sort();
+  return {
+    others,
+    left: sorted.filter((l) => l < 'C'),
+    right: sorted.filter((l) => l >= 'C'),
+    rows: [...rows.keys()].sort((a, b) => a - b).map((row) => ({ row, byLetter: rows.get(row)! })),
+  };
 }
 
 /** 628xx / +628xx / 8xx → 08xx (format kontak yang diminta backend: ^08\d{8,11}$). */
