@@ -20,3 +20,10 @@ export const formatDateTimeWib = (iso: string) =>
 /** Tanggal hari ini (WIB) dalam format YYYY-MM-DD. */
 export const todayWib = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+
+/** Tambah n hari ke tanggal "YYYY-MM-DD" (aritmetika UTC, aman dari zona waktu perangkat). */
+export const addDays = (iso: string, n: number) => {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};

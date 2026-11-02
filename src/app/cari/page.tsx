@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { TripCard } from '@/components/trip-card';
 import { ApiError } from '@/lib/api/client';
 import { tripApi } from '@/lib/api/endpoints';
-import { formatDate } from '@/lib/format';
+import { formatDate, todayWib } from '@/lib/format';
 import type { Trip } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Hasil Pencarian' };
@@ -16,7 +16,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const sp = await searchParams;
   const from = one(sp.from).trim();
   const to = one(sp.to).trim();
-  const date = one(sp.date);
+  // Tanpa tanggal (mis. dari banner promo di Beranda) = hari ini.
+  const date = one(sp.date) || todayWib();
 
   let trips: Trip[] = [];
   let error: string | null = null;
