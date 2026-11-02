@@ -1,6 +1,6 @@
-# cardBus Web App
+# CardBus Web App
 
-Versi web cardBus (Next.js App Router + TypeScript + Tailwind CSS). Memakai **backend API yang sama**
+Versi web CardBus (Next.js App Router + TypeScript + Tailwind CSS). Memakai **backend API yang sama**
 dengan aplikasi mobile Flutter (`cardbus_backend`, Express + MongoDB, di Railway).
 
 Dulu berada di folder `webapp/` repo `cardbus_app`; sejak November 2026 dipisah ke repo ini

@@ -8,7 +8,7 @@ import './globals.css';
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta' });
 
 export const metadata: Metadata = {
-  title: { default: 'cardBus - Tiket Bus, Lebih Mudah', template: '%s | cardBus' },
+  title: { default: 'CardBus - Tiket Bus, Lebih Mudah', template: '%s | CardBus' },
   description: 'Pesan tiket bus antarkota secara online. Bayar dengan QRIS atau Virtual Account.',
 };
 
