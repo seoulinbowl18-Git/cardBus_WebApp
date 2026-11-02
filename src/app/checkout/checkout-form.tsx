@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { BusPhoto, PoLogo } from '@/components/bus-photo';
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { BusPhoto } from '@/components/bus-photo';
 import { FacilityChips } from '@/components/facility-chips';
 import { SeatPicker } from '@/components/seat-picker';
+import { PoBadge } from '@/components/ui/po-badge';
 import { ApiError } from '@/lib/api/client';
 import { orderApi, tripApi } from '@/lib/api/endpoints';
-import { formatDate, formatDuration, formatRupiah } from '@/lib/format';
+import { formatDuration, formatRupiah, shortDate } from '@/lib/format';
 import {
   MAX_SEATS,
   isValidContactPhone,
@@ -28,9 +29,19 @@ interface Props {
   tier?: string;
 }
 
+/** Keterangan metode, sama dengan PayMethod.subtitle di mobile. */
+const METHOD_HINT: Record<PaymentMethod, string> = {
+  qris: 'Semua e-wallet & mobile banking',
+  va_bca: 'Verifikasi otomatis',
+  va_bri: 'Verifikasi otomatis',
+  va_bni: 'Verifikasi otomatis',
+  va_mandiri: 'Verifikasi otomatis',
+};
+
 /**
- * Checkout: pilih varian & kursi → data penumpang → kontak → metode bayar → POST /api/payments/create.
- * Harga final dihitung server; total di sini hanya perkiraan dari GET /api/trips.
+ * Checkout satu halaman. Isinya sama dengan alur mobile (QuickCheckoutSheet → PassengerScreen →
+ * PaymentScreen): varian & kursi → nama penumpang → kontak → metode bayar → setuju S&K →
+ * POST /api/payments/create. Harga final dihitung server; total di sini hanya perkiraan.
  */
 export function CheckoutForm({ tripId, from, to, date, tier: initialTier }: Props) {
   const router = useRouter();
@@ -44,6 +55,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier }: Prop
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [method, setMethod] = useState<PaymentMethod>('qris');
+  const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
@@ -87,6 +99,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier }: Prop
     () => [...new Set([user?.name, ...(user?.savedPassengers ?? []).map((p) => p.name)].filter((n): n is string => !!n))],
     [user],
   );
+  const usedNames = new Set(seats.map((s) => (names[s] ?? '').trim().toLowerCase()));
 
   function changeTier(key: string) {
     setTierKey(key);
@@ -107,18 +120,30 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier }: Prop
     setSeats(sortSeats([...seats, seat]));
   }
 
+  /** Ketuk nama tersimpan → isi kolom penumpang pertama yang masih kosong. */
+  function fillSaved(name: string) {
+    const empty = seats.find((s) => !(names[s] ?? '').trim());
+    if (empty) setNames((n) => ({ ...n, [empty]: name }));
+  }
+
   const errors = {
     seats: seats.length === 0 ? 'Pilih minimal 1 kursi' : null,
     names: seats.some((s) => !isValidPassengerName(names[s] ?? '')) ? 'Nama penumpang minimal 3 huruf' : null,
-    phone: !isValidContactPhone(phone) ? 'Nomor HP diawali 08, 10–13 digit' : null,
+    phone: !isValidContactPhone(phone) ? 'Nomor WhatsApp diawali 08, 10–13 digit' : null,
     email: !isValidEmail(email) ? 'Email tidak valid' : null,
+    agree: !agree ? 'Centang dulu untuk lanjut' : null,
   };
   const hasErrors = Object.values(errors).some(Boolean);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setTouched(true);
-    if (!trip || !tier || hasErrors) return;
+    if (!trip || !tier || hasErrors) {
+      // Bawa pengguna ke bagian pertama yang belum lengkap
+      const first = (['seats', 'names', 'phone', 'email', 'agree'] as const).find((k) => errors[k]);
+      if (first) document.getElementById(`step-${first}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -147,68 +172,83 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier }: Prop
     }
   }
 
+  const backHref = `/cari?${new URLSearchParams({ from, to, date })}`;
   if (loadError && !trip) {
     return (
-      <div className="space-y-2 rounded-lg bg-red-50 p-4 text-red-700">
+      <div className="space-y-2 rounded-xl bg-red-50 p-4 text-red-700">
         <p>{loadError}</p>
-        <Link href={`/cari?${new URLSearchParams({ from, to, date })}`} className="text-sm underline">
-          Kembali ke hasil pencarian
-        </Link>
+        <Link href={backHref} className="text-sm font-semibold underline">Kembali ke hasil pencarian</Link>
       </div>
     );
   }
-  if (!trip) return <p className="text-slate-500">Memuat jadwal…</p>;
+  if (!trip) return <p className="py-10 text-center text-muted">Memuat jadwal…</p>;
 
-  const show = (msg: string | null) => (touched && msg ? <p className="text-sm text-red-600">{msg}</p> : null);
+  const show = (msg: string | null) => (touched && msg ? <p className="mt-2 text-sm font-semibold text-[#9b1c1c]">{msg}</p> : null);
+  const payLabel = submitting ? 'Membuat tagihan…' : 'Bayar sekarang';
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-6 lg:grid-cols-[1fr_320px]">
-      <div className="space-y-6">
-        {/* Ringkasan jadwal */}
-        <div className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:flex-row">
-          <BusPhoto src={trip.image} alt={trip.poName} className="h-32 w-full shrink-0 rounded-xl sm:h-24 sm:w-36" />
-          <div className="flex-1 space-y-1">
-            <div className="flex justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <PoLogo src={trip.logo} alt={trip.poName} />
-                  <h2 className="font-bold">{trip.poName}</h2>
-                </div>
-                <p className="text-sm text-slate-500">{trip.busClass}</p>
+    <form onSubmit={submit} noValidate className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6">
+      <div className="min-w-0 space-y-4">
+        {/* Ringkasan jadwal (header QuickCheckoutSheet) */}
+        <div className="overflow-hidden rounded-2xl border border-line bg-white">
+          <div className="relative">
+            <BusPhoto src={trip.image} alt={trip.poName} className="h-36 w-full sm:h-44" />
+            <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(4,46,49,0.85)_0%,rgba(4,46,49,0)_70%)]" />
+            <div className="absolute inset-x-0 bottom-0 flex items-end gap-3 p-4 text-white">
+              <PoBadge name={trip.poName} logo={trip.logo} size={44} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-lg font-extrabold">PO {trip.poName}</p>
+                <p className="truncate text-sm text-white/80">{trip.busClass}</p>
               </div>
-              <Link href={`/cari?${new URLSearchParams({ from, to, date })}`} className="text-sm text-brand">
+              <Link href={backHref} className="shrink-0 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold hover:bg-white/30">
                 Ganti jadwal
               </Link>
             </div>
-            <p className="text-sm">
-              {formatDate(date)} · <b>{trip.depart}</b> → <b>{trip.arrive}</b> ({formatDuration(trip.durationMinutes)})
-            </p>
-            <p className="text-sm text-slate-500">
-              Naik di {trip.boardPoint} · Turun di {trip.dropPoint}
-            </p>
-            <div className="pt-1">
-              <FacilityChips codes={trip.facilities} />
+          </div>
+          <div className="space-y-3 p-4">
+            <p className="text-sm font-semibold">{from} → {to} · {shortDate(date)}</p>
+            <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                <p className="text-[17px] font-extrabold leading-tight">{trip.depart}</p>
+                <p className="truncate text-[11px] text-muted">{trip.boardPoint}</p>
+              </div>
+              <div className="flex-1 text-center">
+                <p className="text-[11px] text-muted">{formatDuration(trip.durationMinutes)}</p>
+                <div className="mx-2 border-t border-line" />
+              </div>
+              <div className="min-w-0 text-right">
+                <p className="text-[17px] font-extrabold leading-tight">{trip.arrive}</p>
+                <p className="truncate text-[11px] text-muted">{trip.dropPoint}</p>
+              </div>
             </div>
+            <FacilityChips codes={trip.facilities} />
           </div>
         </div>
 
         {/* 1. Varian & kursi */}
-        <Step n={1} title="Pilih kursi">
+        <Step id="step-seats" n={1} title={trip.tiers.length > 1 ? 'Varian & kursi' : 'Pilih kursi'}>
           {trip.tiers.length > 1 && (
-            <div className="mb-4 flex flex-wrap gap-2">
-              {trip.tiers.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => changeTier(t.key)}
-                  className={`rounded-xl border px-3 py-2 text-left text-sm ${t.key === tierKey ? 'border-brand bg-brand/5' : 'border-slate-300 bg-white'}`}
-                >
-                  <span className="block font-semibold">{t.name}</span>
-                  <span className="text-brand">{formatRupiah(t.price)}</span>
-                  {t.oldPrice ? <span className="ml-1 text-xs text-slate-400 line-through">{formatRupiah(t.oldPrice)}</span> : null}
-                  <span className="block text-xs text-slate-500">{t.freeSeats.length} kursi kosong</span>
-                </button>
-              ))}
+            <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {trip.tiers.map((t) => {
+                const on = t.key === tierKey;
+                const soldOut = t.freeSeats.length === 0;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    disabled={soldOut}
+                    onClick={() => changeTier(t.key)}
+                    aria-pressed={on}
+                    className={`rounded-xl border-[1.4px] px-3 py-2.5 text-left transition disabled:opacity-50 ${on ? 'border-brand bg-teal-soft' : 'border-line bg-white hover:border-brand'}`}
+                  >
+                    <span className="block text-sm font-extrabold">{t.name}</span>
+                    <span className="block text-xs text-muted">
+                      {formatRupiah(t.price)} · {soldOut ? 'habis' : `sisa ${t.freeSeats.length}`}
+                    </span>
+                    {t.oldPrice ? <span className="text-[11px] text-faint line-through">{formatRupiah(t.oldPrice)}</span> : null}
+                  </button>
+                );
+              })}
             </div>
           )}
           {tier && <SeatPicker tier={tier} selected={seats} max={MAX_SEATS} onToggle={toggleSeat} />}
@@ -216,113 +256,143 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier }: Prop
         </Step>
 
         {/* 2. Penumpang */}
-        <Step n={2} title="Data penumpang">
+        <Step id="step-names" n={2} title="Data penumpang" hint="Cukup nama lengkap tiap penumpang">
           {seats.length === 0 ? (
-            <p className="text-sm text-slate-500">Pilih kursi dulu; satu nama untuk setiap kursi.</p>
+            <p className="text-sm text-muted">Pilih kursi dulu; satu nama untuk setiap kursi.</p>
           ) : (
             <div className="space-y-3">
               {seats.map((s, i) => (
-                <label key={s} className="flex flex-col gap-1 text-sm">
-                  Penumpang {i + 1} · Kursi {s}
+                <label key={s} className="block text-xs font-semibold text-muted">
+                  Penumpang {i + 1} · kursi {s}
                   <input
                     value={names[s] ?? ''}
                     onChange={(e) => setNames((n) => ({ ...n, [s]: e.target.value }))}
-                    list="saved-passengers"
                     maxLength={80}
-                    placeholder="Nama sesuai identitas"
-                    className="rounded-lg border border-slate-300 px-3 py-2"
+                    autoComplete="name"
+                    placeholder="Nama lengkap penumpang"
+                    className={inputCls}
                   />
                 </label>
               ))}
-              <datalist id="saved-passengers">
-                {savedNames.map((n) => (
-                  <option key={n} value={n} />
-                ))}
-              </datalist>
+              {savedNames.length > 0 && (
+                <div>
+                  <p className="mb-1.5 text-xs text-muted">Penumpang tersimpan — ketuk untuk mengisi:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {savedNames.map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        disabled={usedNames.has(n.toLowerCase())}
+                        onClick={() => fillSaved(n)}
+                        className="rounded-full border border-line bg-white px-3 py-1 text-xs font-semibold text-brand hover:border-brand disabled:text-faint disabled:opacity-60"
+                      >
+                        + {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {show(errors.names)}
             </div>
           )}
         </Step>
 
         {/* 3. Kontak */}
-        <Step n={3} title="Kontak pemesan">
-          <p className="mb-3 text-sm text-slate-500">E-tiket & info perjalanan dikirim ke kontak ini.</p>
+        <Step id="step-phone" n={3} title="Kontak pemesan" hint="E-tiket & info perjalanan dikirim ke kontak ini">
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm">
-              Nomor HP
-              <input
-                value={phone}
-                onChange={(e) => setPhone(toLocalPhone(e.target.value))}
-                inputMode="tel"
-                placeholder="08xxxxxxxxxx"
-                className="rounded-lg border border-slate-300 px-3 py-2"
-              />
+            <label className="block text-xs font-semibold text-muted">
+              Nomor WhatsApp
+              <input value={phone} onChange={(e) => setPhone(toLocalPhone(e.target.value))} inputMode="tel" autoComplete="tel" placeholder="08xxxxxxxxxx" className={inputCls} />
               {show(errors.phone)}
             </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Email
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                type="email"
-                inputMode="email"
-                placeholder="nama@email.com"
-                className="rounded-lg border border-slate-300 px-3 py-2"
-              />
+            <label id="step-email" className="block text-xs font-semibold text-muted">
+              Email (untuk e-tiket)
+              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" inputMode="email" autoComplete="email" placeholder="nama@email.com" className={inputCls} />
               {show(errors.email)}
             </label>
           </div>
         </Step>
 
         {/* 4. Metode bayar */}
-        <Step n={4} title="Metode pembayaran">
+        <Step id="step-method" n={4} title="Metode pembayaran">
           <div className="grid gap-2 sm:grid-cols-2">
-            {PAYMENT_METHODS.map((m) => (
-              <label
-                key={m.value}
-                className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-sm ${method === m.value ? 'border-brand bg-brand/5' : 'border-slate-300 bg-white'}`}
-              >
-                <input type="radio" name="method" value={m.value} checked={method === m.value} onChange={() => setMethod(m.value)} className="accent-brand" />
-                <span className="font-medium">{m.label}</span>
-              </label>
-            ))}
+            {PAYMENT_METHODS.map((m) => {
+              const on = method === m.value;
+              return (
+                <label
+                  key={m.value}
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border-[1.4px] px-3 py-3 ${on ? 'border-brand bg-teal-soft' : 'border-line bg-white hover:border-brand'}`}
+                >
+                  <input type="radio" name="method" value={m.value} checked={on} onChange={() => setMethod(m.value)} className="h-4 w-4 accent-brand" />
+                  <span>
+                    <span className="block text-sm font-extrabold">{m.label}</span>
+                    <span className="block text-xs text-muted">{METHOD_HINT[m.value]}</span>
+                  </span>
+                </label>
+              );
+            })}
           </div>
         </Step>
+
+        {/* Persetujuan (PassengerScreen mobile) */}
+        <div id="step-agree" className="rounded-2xl border border-line bg-white p-4">
+          <label className="flex cursor-pointer items-start gap-3 text-sm">
+            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-brand" />
+            <span>
+              Saya setuju dengan <Link href="/syarat-ketentuan" target="_blank" className="font-semibold text-brand underline">syarat & ketentuan</Link> serta{' '}
+              <Link href="/akun/pembatalan" target="_blank" className="font-semibold text-brand underline">kebijakan pembatalan</Link> PO.
+            </span>
+          </label>
+          {show(errors.agree)}
+        </div>
       </div>
 
-      {/* Ringkasan harga */}
-      <aside className="h-fit space-y-3 rounded-2xl bg-white p-5 shadow-sm lg:sticky lg:top-20">
-        <h2 className="font-bold">Ringkasan</h2>
-        <div className="space-y-1 text-sm">
+      {/* Ringkasan harga: kolom kanan di layar lebar */}
+      <aside className="hidden h-fit space-y-3 rounded-2xl border border-line bg-white p-5 lg:sticky lg:top-20 lg:block">
+        <h2 className="font-extrabold">Ringkasan</h2>
+        <div className="space-y-1.5 text-sm">
           <Row label="Varian" value={tier?.name ?? '-'} />
           <Row label="Kursi" value={seats.length ? seats.join(', ') : '-'} />
           <Row label={`Harga × ${seats.length || 0}`} value={tier ? formatRupiah(tier.price) : '-'} />
           <Row label="Metode" value={PAYMENT_METHODS.find((m) => m.value === method)?.label ?? '-'} />
         </div>
-        <div className="flex justify-between border-t border-slate-200 pt-3 font-bold">
-          <span>Total</span>
-          <span className="text-brand">{formatRupiah(total)}</span>
+        <div className="flex justify-between border-t border-line pt-3">
+          <span className="font-bold">Total bayar</span>
+          <span className="text-lg font-extrabold text-brand-dark">{formatRupiah(total)}</span>
         </div>
         {submitError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{submitError}</p>}
-        <button
-          disabled={submitting || !tier}
-          className="w-full rounded-lg bg-brand py-3 font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
-        >
-          {submitting ? 'Memproses…' : 'Bayar Sekarang'}
-        </button>
-        <p className="text-xs text-slate-500">Kursi ditahan sementara sampai batas waktu pembayaran. Total final dihitung server.</p>
+        <button disabled={submitting || !tier} className={`${payBtnCls} w-full`}>{payLabel}</button>
+        <p className="text-xs text-faint">Perkiraan; total akhir dihitung server saat tagihan dibuat. Kursi ditahan sampai batas waktu bayar.</p>
       </aside>
+
+      {/* Bar bawah di HP/tablet (bottom bar QuickCheckoutSheet) */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-6px_20px_rgba(6,78,82,0.08)] lg:hidden">
+        {submitError && <p className="mb-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">{submitError}</p>}
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] text-muted">Total ({seats.length} kursi{seats.length ? ` · ${seats.join(', ')}` : ''})</p>
+            <p className="text-lg font-extrabold">{formatRupiah(total)}</p>
+          </div>
+          <button disabled={submitting || !tier} className={`${payBtnCls} shrink-0 px-6`}>{payLabel}</button>
+        </div>
+      </div>
     </form>
   );
 }
 
-function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+const inputCls = 'mt-1.5 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal text-ink outline-none focus:border-brand';
+const payBtnCls = 'rounded-xl bg-gold py-3 font-extrabold text-ink shadow-sm transition hover:brightness-95 disabled:opacity-60';
+
+function Step({ id, n, title, hint, children }: { id: string; n: number; title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-sm">
-      <h2 className="mb-3 flex items-center gap-2 font-bold">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-xs text-white">{n}</span>
-        {title}
-      </h2>
+    <section id={id} className="rounded-2xl border border-line bg-white p-4 sm:p-5">
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand text-xs font-bold text-white">{n}</span>
+        <div>
+          <h2 className="font-extrabold">{title}</h2>
+          {hint && <p className="text-xs text-muted">{hint}</p>}
+        </div>
+      </div>
       {children}
     </section>
   );
@@ -331,8 +401,8 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-3">
-      <span className="text-slate-500">{label}</span>
-      <span className="text-right font-medium">{value}</span>
+      <span className="text-muted">{label}</span>
+      <span className="text-right font-semibold">{value}</span>
     </div>
   );
 }

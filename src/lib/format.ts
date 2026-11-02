@@ -27,3 +27,28 @@ export const addDays = (iso: string, n: number) => {
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 };
+
+const DOW = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+/** Bagian tanggal "YYYY-MM-DD" untuk chip tanggal (tanpa terpengaruh zona waktu perangkat). */
+export const dateParts = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return { dow: DOW[d.getUTCDay()], day: d.getUTCDate(), mon: MON[d.getUTCMonth()] };
+};
+
+/** "Sen, 2 Nov" — sama dengan dateLabel() di mobile. */
+export const shortDate = (iso: string) => {
+  const p = dateParts(iso);
+  return `${p.dow}, ${p.day} ${p.mon}`;
+};
+
+/** Hitung mundur "12:34" / "1:02:03" sampai waktu tertentu (null bila sudah lewat). */
+export const countdown = (untilMs: number, nowMs: number) => {
+  const s = Math.floor((untilMs - nowMs) / 1000);
+  if (s <= 0) return null;
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+};

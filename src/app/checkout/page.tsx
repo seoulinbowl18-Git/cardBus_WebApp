@@ -22,7 +22,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-bold">Pesan Tiket</h1>
+      <h1 className="text-xl font-extrabold sm:text-2xl">Pesan Tiket</h1>
       {valid ? (
         <RequireAuth>
           <CheckoutForm {...params} />

@@ -39,8 +39,8 @@ export function SeatPicker({ tier, selected, max, onToggle }: Props) {
           isSel
             ? 'border-brand bg-brand text-white'
             : isFree
-              ? 'border-brand bg-white text-brand hover:bg-brand/10 disabled:cursor-not-allowed disabled:opacity-40'
-              : 'cursor-not-allowed border-slate-200 bg-slate-200 text-slate-400',
+              ? 'border-brand bg-white text-brand hover:bg-teal-soft disabled:cursor-not-allowed disabled:opacity-40'
+              : 'cursor-not-allowed border-line bg-[#e9eeee] text-faint',
         ].join(' ')}
       >
         {code}
@@ -56,7 +56,7 @@ export function SeatPicker({ tier, selected, max, onToggle }: Props) {
       <div className="flex flex-wrap gap-4 text-xs text-slate-500">
         <Legend className="border-brand bg-white" label="Tersedia" />
         <Legend className="border-brand bg-brand" label="Dipilih" />
-        {hasLayout && <Legend className="border-slate-200 bg-slate-200" label="Terisi" />}
+        {hasLayout && <Legend className="border-line bg-[#e9eeee]" label="Terisi" />}
       </div>
       <div className="inline-block min-w-[240px] rounded-b-xl rounded-t-[28px] border-[1.4px] border-slate-200 bg-white px-4 pb-4 pt-3">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
