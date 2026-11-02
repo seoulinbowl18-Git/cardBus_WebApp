@@ -43,13 +43,14 @@ Tanpa ini, request dari browser akan ditolak CORS (halaman `/cari` tetap jalan k
 Memakai project Firebase yang sama dengan mobile (`cardbus-d6aa5`). Alurnya: pop-up pilih akun Google →
 Firebase ID token → `POST /api/auth/google` → JWT backend (backend tidak perlu diubah).
 
-1. Firebase Console → Project settings → General → **Add app → Web (`</>`)**, lalu salin `apiKey` dan `appId`
-   ke `NEXT_PUBLIC_FIREBASE_API_KEY` dan `NEXT_PUBLIC_FIREBASE_APP_ID`.
-2. Authentication → Sign-in method: pastikan **Google** aktif (sudah dipakai mobile).
-3. Authentication → Settings → **Authorized domains**: tambahkan domain web (mis. `cardbus.vercel.app`).
-   `localhost` sudah diizinkan secara default.
+1. ✅ Aplikasi Web **cardBus Web** sudah terdaftar di Firebase; `apiKey` & `appId`-nya menjadi default
+   di `src/lib/firebase.ts` (nilai publik, aman ikut ke browser). Env `NEXT_PUBLIC_FIREBASE_*` bisa menimpanya.
+2. ✅ Authentication → Sign-in method: **Google** aktif.
+3. ⏳ Authentication → Settings → **Authorized domains**: tambahkan domain web setelah deploy
+   (mis. `cardbus-webapp-production.up.railway.app`). `localhost` sudah diizinkan secara default.
 
-Selama `API_KEY`/`APP_ID` kosong, tombol "Masuk dengan Google" disembunyikan; login OTP tetap jalan.
+Di Docker/Railway semua `NEXT_PUBLIC_*` dideklarasikan sebagai build arg di `Dockerfile`, jadi variabel
+service Railway ikut terbawa saat build.
 
 ## Foto, fasilitas, dan denah kursi
 

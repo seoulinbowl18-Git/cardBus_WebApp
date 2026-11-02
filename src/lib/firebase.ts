@@ -5,12 +5,15 @@
  */
 
 // Ditulis literal agar Next.js menyisipkan nilainya saat build.
+// Default = aplikasi Web "cardBus Web" di project cardbus-d6aa5. Nilai ini memang publik
+// (ikut terkirim ke browser); keamanan dijaga oleh Authorized domains di Firebase dan
+// verifikasi ID token di backend. Env NEXT_PUBLIC_FIREBASE_* tetap bisa menimpanya.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyD8sFYKp66AOSmmjw9yisCXRYCO6ZtQkDo',
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'cardbus-d6aa5.firebaseapp.com',
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cardbus-d6aa5',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || undefined,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:659374502720:web:a5ff2e43fc377d897640a5',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '659374502720',
 };
 
 export const isGoogleLoginEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.appId && firebaseConfig.projectId);
