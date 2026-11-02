@@ -3,10 +3,14 @@
 Versi web cardBus (Next.js App Router + TypeScript + Tailwind CSS). Memakai **backend API yang sama**
 dengan aplikasi mobile Flutter (`cardbus_backend`, Express + MongoDB, di Railway).
 
+Dulu berada di folder `webapp/` repo `cardbus_app`; sejak November 2026 dipisah ke repo ini
+(riwayat commit ikut dipindahkan).
+
 ## Menjalankan
 
 ```bash
-cd webapp
+git clone https://github.com/seoulinbowl18-Git/cardBus_WebApp.git
+cd cardBus_WebApp
 cp .env.example .env.local   # sesuaikan NEXT_PUBLIC_API_BASE_URL bila perlu
 npm install
 npm run dev                  # http://localhost:3000
@@ -57,7 +61,7 @@ Data baru masuk ke database dengan menjalankan `npm run seed` di backend (upsert
 ## Struktur
 
 ```
-webapp/
+cardBus_WebApp/
 ├── next.config.ts          # standalone output, header keamanan, domain gambar
 ├── .env.example            # variabel lingkungan (salin ke .env.local)
 ├── Dockerfile              # image produksi (Railway / Docker)
