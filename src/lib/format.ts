@@ -13,6 +13,10 @@ export const formatDuration = (minutes: number) => {
   return m ? `${h}j ${m}m` : `${h}j`;
 };
 
+/** Tanggal + jam dalam WIB, mis. "2 November 2026, 10.25 WIB" (tidak bergantung zona waktu perangkat). */
+export const formatDateTimeWib = (iso: string) =>
+  `${new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).format(new Date(iso))} WIB`;
+
 /** Tanggal hari ini (WIB) dalam format YYYY-MM-DD. */
 export const todayWib = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());

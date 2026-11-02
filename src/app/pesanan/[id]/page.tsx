@@ -6,7 +6,7 @@ import { RequireAuth } from '@/components/require-auth';
 import { ApiError } from '@/lib/api/client';
 import { orderApi } from '@/lib/api/endpoints';
 import { config } from '@/lib/config';
-import { formatDate, formatRupiah } from '@/lib/format';
+import { formatDate, formatDateTimeWib, formatRupiah } from '@/lib/format';
 import type { Order } from '@/lib/types';
 
 /** Detail pesanan: tampilkan QRIS / VA saat pending dan pantau status (sama dengan PaymentRepository.get di mobile). */
@@ -63,7 +63,7 @@ function OrderDetail({ id }: { id: string }) {
               {p.bankName ?? p.bankCode}: <span className="font-mono text-xl font-bold">{p.vaNumber}</span>
             </p>
           )}
-          {p.expiredAt && <p className="text-sm text-slate-500">Bayar sebelum {new Date(p.expiredAt).toLocaleString('id-ID')}</p>}
+          {p.expiredAt && <p className="text-sm text-slate-500">Bayar sebelum {formatDateTimeWib(p.expiredAt)}</p>}
           <p className="text-xs text-slate-400">Status diperbarui otomatis.</p>
         </div>
       )}
