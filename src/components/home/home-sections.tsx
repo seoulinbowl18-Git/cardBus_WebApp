@@ -77,7 +77,7 @@ function PromoBanner({ promo, onSoon, tall }: { promo: Promo; onSoon: (m: string
 }
 
 /** Deretan banner yang bisa digeser (HP) / grid (laptop), dengan titik penanda. */
-export function PromoRow({ promos, tall }: { promos: Promo[]; tall?: boolean }) {
+export function PromoRow({ promos, tall, stacked }: { promos: Promo[]; tall?: boolean; stacked?: boolean }) {
   const toast = useToast();
   const ref = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
@@ -87,6 +87,16 @@ export function PromoRow({ promos, tall }: { promos: Promo[]; tall?: boolean }) 
     const w = (el.firstElementChild as HTMLElement).offsetWidth + 12;
     setIndex(Math.round(el.scrollLeft / w));
   };
+  if (stacked) {
+    return (
+      <>
+        <div className="grid gap-3 md:grid-cols-2">
+          {promos.map((p) => <PromoBanner key={p.title} promo={p} tall={tall} onSoon={toast.show} />)}
+        </div>
+        {toast.node}
+      </>
+    );
+  }
   return (
     <>
       <div

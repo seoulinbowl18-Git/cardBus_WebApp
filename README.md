@@ -74,7 +74,9 @@ cardBus_WebApp/
     │   ├── checkout/       # pilih varian & kursi, penumpang, kontak, metode bayar
     │   ├── masuk/          # login OTP WhatsApp
     │   ├── pesanan/        # Tiket Saya + detail/pembayaran (polling status)
-    │   └── akun/           # profil
+    │   ├── akun/           # profil, foto, penumpang tersimpan, menu; akun/pembatalan = ketentuan refund
+    │   ├── promo/          # Promo & Info
+    │   ├── syarat-ketentuan/, kebijakan-privasi/  # teks dari lib/legal.ts (= legal_content.dart mobile)
     ├── components/         # SiteHeader, TripCard, SeatPicker, BusPhoto, FacilityChips, RequireAuth
     ├── lib/
     │   ├── config.ts       # baca env

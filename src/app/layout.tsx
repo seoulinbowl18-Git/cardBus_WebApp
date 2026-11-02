@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
+import { BottomNav } from '@/components/bottom-nav';
 import { SiteHeader } from '@/components/site-header';
 import { AuthProvider } from '@/providers/auth-provider';
+import { UiProvider } from '@/providers/ui-provider';
 import './globals.css';
 
 // Font yang sama dengan aplikasi mobile (google_fonts: Plus Jakarta Sans)
@@ -19,8 +21,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="id" className={jakarta.variable}>
       <body>
         <AuthProvider>
-          <SiteHeader />
-          <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+          <UiProvider>
+            <SiteHeader />
+            {/* pb-28 di HP: ruang untuk menu bawah */}
+            <main className="mx-auto max-w-5xl px-4 pb-28 pt-8 sm:pb-12">{children}</main>
+            <BottomNav />
+          </UiProvider>
         </AuthProvider>
       </body>
     </html>
