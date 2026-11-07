@@ -12,11 +12,13 @@ export default function HomePage() {
     <div className="space-y-8">
       {/* Hero selebar layar: sapaan + bilah cari horizontal */}
       <section className="relative -mt-8 ml-[calc(50%-50vw)] w-screen">
-        <div className="relative overflow-hidden rounded-b-[28px] bg-[linear-gradient(100deg,#04454a_0%,#0a6c66_32%,#0f857d_58%,#4f968f_100%)] sm:rounded-none">
+        <div className="relative rounded-b-[28px] bg-[linear-gradient(100deg,#04454a_0%,#0a6c66_32%,#0f857d_58%,#4f968f_100%)] sm:rounded-none">
           {/* Jalan melengkung samar, seperti _RoadPainter di mobile */}
-          <svg className="pointer-events-none absolute -bottom-6 right-0 h-48 w-80 text-white/10" viewBox="0 0 320 190" fill="none" aria-hidden>
-            <path d="M130 210C180 130 240 80 340 60" stroke="currentColor" strokeWidth={34} strokeLinecap="round" />
-          </svg>
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-b-[28px] sm:rounded-none" aria-hidden>
+            <svg className="absolute -bottom-6 right-0 h-48 w-80 text-white/10" viewBox="0 0 320 190" fill="none">
+              <path d="M130 210C180 130 240 80 340 60" stroke="currentColor" strokeWidth={34} strokeLinecap="round" />
+            </svg>
+          </div>
           <div className="relative mx-auto grid max-w-[1360px] grid-cols-[minmax(0,1fr)] items-center gap-5 px-4 pb-12 pt-6 sm:px-8 sm:pb-16 sm:pt-12 lg:pt-14 2xl:grid-cols-[minmax(0,0.62fr)_minmax(0,2fr)] 2xl:gap-12 2xl:py-20">
             <div className="space-y-2">
               <Greeting />

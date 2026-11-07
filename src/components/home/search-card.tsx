@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { DEFAULT_ROUTE } from '@/lib/home-content';
 import { dateParts, todayWib } from '@/lib/format';
 import { pointAllowed, useLocations, type Place } from '@/lib/locations';
+import { DatePicker } from './date-picker';
 import { LocationField } from './location-picker';
 
 /** "2026-11-02" → "02/11/2026" */
@@ -22,6 +23,7 @@ export function SearchCard() {
   const [from, setFrom] = useState<Place>({ city: DEFAULT_ROUTE.from, point: null });
   const [to, setTo] = useState<Place>({ city: DEFAULT_ROUTE.to, point: null });
   const [date, setDate] = useState(today);
+  const [pickingDate, setPickingDate] = useState(false);
   const sameCity = from.city === to.city;
   const p = dateParts(date);
 
@@ -70,51 +72,41 @@ export function SearchCard() {
           <LocationField label="Ke" value={to} onChange={setTo} locations={locations} className="h-[78px] lg:flex-1" />
         </div>
 
-        {/* TANGGAL PERJALANAN */}
-        <label
-          className="relative flex h-[78px] min-w-0 cursor-pointer flex-col justify-center rounded-2xl border border-line bg-white px-4 py-2.5 transition hover:border-brand focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30 lg:flex-1"
-        >
-          <span className="block text-[11px] font-semibold uppercase tracking-wider text-faint">Tanggal perjalanan</span>
-          <span className="mt-0.5 flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-brand" fill="currentColor" aria-hidden>
-              <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm13 8H4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9ZM7 12h2v2H7v-2Zm4 0h2v2h-2v-2Zm4 0h2v2h-2v-2Zm-8 4h2v2H7v-2Zm4 0h2v2h-2v-2Z" />
-            </svg>
-            <span className="flex-1 truncate text-lg font-semibold leading-tight text-ink">{ddmmyyyy(date)}</span>
-            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
-              <rect x="3.5" y="5" width="17" height="15" rx="2" />
-              <path d="M3.5 9.5h17M8 3v4M16 3v4" />
-            </svg>
-          </span>
-          <span className="mt-0.5 block truncate pl-7 text-xs text-faint">
-            {date === today ? 'Hari ini' : `${p.dow === 'Min' ? 'Minggu' : p.dow}, ${p.day} ${p.mon}`}
-          </span>
-          {/*
-            Input tanggal asli menutupi seluruh kotak (transparan): ketukan di mana pun langsung
-            membuka pemilih tanggal bawaan — wajib untuk Safari iPad/iPhone yang menolak membuka
-            pemilih dari input tersembunyi. Chrome/Edge desktop dibantu showPicker().
-          */}
-          <input
-            type="date"
-            name="date"
-            min={today}
-            value={date}
-            onChange={(e) => e.target.value && e.target.value >= today && setDate(e.target.value)}
-            onClick={(e) => {
-              try {
-                e.currentTarget.showPicker();
-              } catch {
-                /* browser membuka pemilihnya sendiri */
-              }
-            }}
+        {/* TANGGAL PERJALANAN: kalender CardBus (tanggal lampau gelap & tidak bisa dipilih) */}
+        <div className="relative min-w-0 lg:flex-1">
+          <input type="hidden" name="date" value={date} />
+          <button
+            type="button"
+            onClick={() => setPickingDate((o) => !o)}
+            aria-haspopup="dialog"
+            aria-expanded={pickingDate}
             aria-label={`Tanggal perjalanan: ${p.dow}, ${p.day} ${p.mon}. Ubah`}
-            className="absolute inset-0 z-10 h-full w-full cursor-pointer appearance-none rounded-2xl text-base opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-          />
-        </label>
+            className={`flex h-[78px] w-full min-w-0 flex-col justify-center rounded-2xl border bg-white px-4 py-2.5 text-left transition hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 ${pickingDate ? 'border-brand ring-2 ring-brand/30' : 'border-line'}`}
+          >
+            <span className="block text-[11px] font-semibold uppercase tracking-wider text-faint">Tanggal perjalanan</span>
+            <span className="mt-0.5 flex items-center gap-2">
+              <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-brand" fill="currentColor" aria-hidden>
+                <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm13 8H4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9ZM7 12h2v2H7v-2Zm4 0h2v2h-2v-2Zm4 0h2v2h-2v-2Zm-8 4h2v2H7v-2Zm4 0h2v2h-2v-2Z" />
+              </svg>
+              <span className="flex-1 truncate text-lg font-semibold leading-tight text-ink">{ddmmyyyy(date)}</span>
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                <rect x="3.5" y="5" width="17" height="15" rx="2" />
+                <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+              </svg>
+            </span>
+            <span className="mt-0.5 block truncate pl-7 text-xs text-faint">
+              {date === today ? 'Hari ini' : `${p.dow === 'Min' ? 'Minggu' : p.dow}, ${p.day} ${p.mon}`}
+            </span>
+          </button>
+          {pickingDate && <DatePicker value={date} min={today} onChange={setDate} onClose={() => setPickingDate(false)} />}
+        </div>
+      </div>
 
-        {/* Cari Tiket */}
+      {/* Cari Tiket: di tengah, kuning */}
+      <div className="mt-3 flex justify-center">
         <button
           disabled={sameCity}
-          className="flex h-[54px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-brand px-6 text-base font-bold text-white shadow-[0_10px_20px_-8px_rgba(8,127,120,0.8)] transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50 lg:h-auto lg:self-stretch"
+          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-gold px-10 text-base font-extrabold text-ink shadow-[0_10px_20px_-10px_rgba(176,124,0,0.9)] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[280px]"
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" aria-hidden>
             <circle cx="11" cy="11" r="7" />
