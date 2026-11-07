@@ -133,6 +133,8 @@ export interface CreateOrderBody {
   passengers: { name: string }[];
   contact: { phone: string; email: string };
   method: PaymentMethod;
+  /** Voucher milik pengguna (GET /api/vouchers); diskon dihitung server. */
+  userVoucherId?: number;
 }
 
 export type OrderStatus = 'pending' | 'paid' | 'expired' | 'cancelled';
@@ -162,6 +164,9 @@ export interface Order {
   seats: string[];
   passengers: string[];
   unitPrice: number;
+  /** Harga sebelum voucher & potongan voucher (backend PostgreSQL). */
+  subtotal?: number | null;
+  discount?: number | null;
   total: number;
   expiresAt: string | null;
   ticketIssuedAt: string | null;
@@ -181,4 +186,28 @@ export interface UpdateProfileBody {
   name?: string;
   photoUrl?: string | null;
   savedPassengers?: { name: string; phone?: string | null }[];
+}
+
+/** GET /api/referral/me — Ajak Teman */
+export interface ReferralInfo {
+  code: string;
+  campaign: { title: string; referrerReward: number; refereeReward: number } | null;
+  stats: { pending: number; completed: number };
+}
+
+export type VoucherStatus = 'available' | 'reserved' | 'used' | 'expired';
+export type VoucherTab = 'available' | 'used' | 'expired';
+
+/** GET /api/vouchers — voucher milik pengguna */
+export interface UserVoucher {
+  id: number;
+  title: string;
+  discountType: 'fixed' | 'percent';
+  discountValue: number;
+  maxDiscount: number | null;
+  minPurchase: number | null;
+  status: VoucherStatus;
+  source: string | null;
+  expiresAt: string | null;
+  usedAt: string | null;
 }

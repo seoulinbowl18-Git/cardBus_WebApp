@@ -7,9 +7,10 @@ import { BusPhoto } from '@/components/bus-photo';
 import { FacilityChips } from '@/components/facility-chips';
 import { SeatLayoutMap } from '@/components/seat-layout-map';
 import { SeatPicker } from '@/components/seat-picker';
+import { VoucherPicker } from '@/components/voucher-picker';
 import { PoBadge } from '@/components/ui/po-badge';
 import { ApiError } from '@/lib/api/client';
-import { orderApi, tripApi } from '@/lib/api/endpoints';
+import { orderApi, tripApi, voucherApi } from '@/lib/api/endpoints';
 import { formatDuration, formatRupiah, shortDate } from '@/lib/format';
 import {
   MAX_SEATS,
@@ -19,7 +20,8 @@ import {
   sortSeats,
   toLocalPhone,
 } from '@/lib/seats';
-import { PAYMENT_METHODS, type PaymentMethod, type Trip } from '@/lib/types';
+import { PAYMENT_METHODS, type PaymentMethod, type Trip, type UserVoucher } from '@/lib/types';
+import { discountLabel } from '@/lib/vouchers';
 import { useAuth } from '@/providers/auth-provider';
 
 interface Props {
@@ -99,7 +101,35 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
   }, [user]);
 
   const tier = useMemo(() => trip?.tiers.find((t) => t.key === tierKey) ?? null, [trip, tierKey]);
-  const total = tier ? tier.price * seats.length : 0;
+  const subtotal = tier ? tier.price * seats.length : 0;
+  // Voucher (opsional): diskon dihitung server lewat POST /api/vouchers/quote
+  const [voucher, setVoucher] = useState<UserVoucher | null>(null);
+  const [discount, setDiscount] = useState(0);
+  const [voucherNote, setVoucherNote] = useState<string | null>(null);
+  const [pickingVoucher, setPickingVoucher] = useState(false);
+  const total = Math.max(0, subtotal - (voucher ? discount : 0));
+
+  // Jumlah kursi / varian berubah → hitung ulang diskon; lepas voucher bila tidak lagi memenuhi syarat
+  useEffect(() => {
+    if (!voucher) return;
+    if (subtotal <= 0) {
+      setDiscount(0);
+      return;
+    }
+    let alive = true;
+    voucherApi
+      .quote(voucher.id, subtotal)
+      .then((q) => alive && setDiscount(q.discount))
+      .catch((e) => {
+        if (!alive) return;
+        setVoucher(null);
+        setDiscount(0);
+        setVoucherNote(`Voucher dilepas: ${e instanceof ApiError ? e.message : 'tidak bisa dipakai'}`);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [voucher, subtotal]);
   const savedNames = useMemo(
     () => [...new Set([user?.name, ...(user?.savedPassengers ?? []).map((p) => p.name)].filter((n): n is string => !!n))],
     [user],
@@ -170,6 +200,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
         passengers: seats.map((s) => ({ name: names[s].trim() })),
         contact: { phone, email: email.trim() },
         method,
+        ...(voucher && { userVoucherId: voucher.id }),
       });
       router.push(`/pesanan/${order.id}`);
     } catch (err) {
@@ -340,6 +371,50 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
           </div>
         </Step>
 
+        {/* Voucher (PaymentScreen mobile: "Pakai voucher") */}
+        <section className="rounded-2xl border border-line bg-white p-4 sm:p-5">
+          <div className="flex items-center gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-teal-soft text-brand">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4Zm6 0v10" />
+              </svg>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-extrabold">{voucher ? voucher.title : 'Pakai voucher'}</p>
+              <p className="text-xs text-muted">
+                {voucher ? `Hemat ${formatRupiah(discount)} · diskon ${discountLabel(voucher)}` : 'Pilih voucher untuk potongan harga'}
+              </p>
+            </div>
+            {voucher ? (
+              <button type="button" onClick={() => { setVoucher(null); setDiscount(0); }} className="shrink-0 text-sm font-bold text-[#9b1c1c]">
+                Hapus
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => (seats.length ? setPickingVoucher(true) : setVoucherNote('Pilih kursi dulu, lalu pilih voucher.'))}
+                className="shrink-0 rounded-lg border border-brand px-3 py-1.5 text-sm font-bold text-brand hover:bg-teal-soft"
+              >
+                Pilih
+              </button>
+            )}
+          </div>
+          {voucherNote && <p className="mt-2 text-xs font-semibold text-[#8a5a00]">{voucherNote}</p>}
+        </section>
+        {pickingVoucher && (
+          <VoucherPicker
+            subtotal={subtotal}
+            selectedId={voucher?.id ?? null}
+            onClose={() => setPickingVoucher(false)}
+            onPick={(v, d) => {
+              setVoucher(v);
+              setDiscount(d);
+              setVoucherNote(null);
+              setPickingVoucher(false);
+            }}
+          />
+        )}
+
         {/* 4. Metode bayar */}
         <Step id="step-method" n={4} title="Metode pembayaran">
           <div className="grid gap-2 sm:grid-cols-2">
@@ -381,6 +456,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
           <Row label="Varian" value={tier?.name ?? '-'} />
           <Row label="Kursi" value={seats.length ? seats.join(', ') : '-'} />
           <Row label={`Harga × ${seats.length || 0}`} value={tier ? formatRupiah(tier.price) : '-'} />
+          {voucher && <Row label="Voucher" value={`− ${formatRupiah(discount)}`} />}
           <Row label="Metode" value={PAYMENT_METHODS.find((m) => m.value === method)?.label ?? '-'} />
         </div>
         <div className="flex justify-between border-t border-line pt-3">
@@ -397,7 +473,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
         {submitError && <p className="mb-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">{submitError}</p>}
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] text-muted">Total ({seats.length} kursi{seats.length ? ` · ${seats.join(', ')}` : ''})</p>
+            <p className="text-[11px] text-muted">Total ({seats.length} kursi{seats.length ? ` · ${seats.join(', ')}` : ''}){voucher && discount ? ` · hemat ${formatRupiah(discount)}` : ''}</p>
             <p className="text-lg font-extrabold">{formatRupiah(total)}</p>
           </div>
           <button disabled={submitting || !tier} className={`${payBtnCls} shrink-0 px-6`}>{payLabel}</button>

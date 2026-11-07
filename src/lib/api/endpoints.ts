@@ -2,6 +2,9 @@ import { api } from './client';
 import type {
   CreateOrderBody,
   Locations,
+  ReferralInfo,
+  UserVoucher,
+  VoucherTab,
   LoginResponse,
   Order,
   SendOtpResponse,
@@ -32,6 +35,22 @@ export const tripApi = {
 export const locationApi = {
   /** Kota & titik naik/turun dari rute jadwal aktif (cache 60 detik di backend). */
   list: (signal?: AbortSignal) => api.get<Locations>('/api/locations', undefined, signal),
+};
+
+/** Ajak Teman (sama dengan ReferralRepository di mobile). */
+export const referralApi = {
+  me: () => api.get<ReferralInfo>('/api/referral/me'),
+  /** Teman baru memakai kode referral (setelah login pertama). */
+  apply: (code: string) => api.post<{ ok: true }>('/api/referral/apply', { code }),
+};
+
+export const voucherApi = {
+  list: (status: VoucherTab = 'available') => api.get<UserVoucher[]>('/api/vouchers', { status }),
+  /** Klaim kode voucher publik. */
+  claim: (code: string) => api.post<UserVoucher>('/api/vouchers/claim', { code }),
+  /** Perkiraan diskon untuk subtotal (server memeriksa kepemilikan, masa berlaku, minimum). */
+  quote: (userVoucherId: number, subtotal: number) =>
+    api.post<{ discount: number; total: number }>('/api/vouchers/quote', { userVoucherId, subtotal }),
 };
 
 export const orderApi = {

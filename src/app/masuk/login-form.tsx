@@ -3,15 +3,38 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ApiError } from '@/lib/api/client';
-import { authApi } from '@/lib/api/endpoints';
+import { authApi, referralApi } from '@/lib/api/endpoints';
 import { GoogleLoginCancelled, getGoogleIdToken, isGoogleLoginEnabled } from '@/lib/firebase';
+import { REFERRAL_STORAGE_KEY, normalizeCode } from '@/lib/vouchers';
 import { useAuth } from '@/providers/auth-provider';
+import { useUi } from '@/providers/ui-provider';
+
+const store = {
+  get: () => {
+    try {
+      return localStorage.getItem(REFERRAL_STORAGE_KEY) ?? '';
+    } catch {
+      return '';
+    }
+  },
+  set: (v: string) => {
+    try {
+      if (v) localStorage.setItem(REFERRAL_STORAGE_KEY, v);
+      else localStorage.removeItem(REFERRAL_STORAGE_KEY);
+    } catch {
+      /* penyimpanan diblokir: kode tetap ada di kolom isian */
+    }
+  },
+};
 
 /** Login OTP WhatsApp: POST /api/auth/send-otp lalu /api/auth/verify-otp (sama dengan mobile). */
 export function LoginForm() {
   const { login, token, ready } = useAuth();
+  const { toast } = useUi();
   const router = useRouter();
-  const next = useSearchParams().get('next');
+  const params = useSearchParams();
+  const next = params.get('next');
+  const refParam = params.get('ref');
   const target = next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
@@ -20,6 +43,35 @@ export function LoginForm() {
   const [resendIn, setResendIn] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Kode referral (Ajak Teman): dari tautan undangan ?ref=… atau diketik sendiri
+  const [referral, setReferral] = useState('');
+  const [showReferral, setShowReferral] = useState(false);
+
+  useEffect(() => {
+    const fromLink = refParam ? normalizeCode(refParam) : '';
+    if (fromLink) store.set(fromLink);
+    const code = fromLink || store.get();
+    if (code) {
+      setReferral(code);
+      setShowReferral(true);
+    }
+  }, [refParam]);
+
+  /**
+   * Pakai kode referral setelah login (sama dengan AuthProvider._applyPendingReferral di mobile).
+   * Gagal (kode salah, bukan pengguna baru, …) tidak membatalkan login; pesannya ditampilkan.
+   */
+  async function applyReferral() {
+    const code = normalizeCode(referral);
+    store.set('');
+    if (!code) return;
+    try {
+      await referralApi.apply(code);
+      toast(`Kode referral ${code} berhasil dipakai. Voucher hadiah terbit setelah perjalanan pertamamu selesai.`);
+    } catch (err) {
+      toast(`Kode referral ${code} tidak bisa dipakai: ${err instanceof ApiError ? err.message : 'coba lagi nanti'}`);
+    }
+  }
 
   useEffect(() => {
     if (ready && token) router.replace(target);
@@ -52,6 +104,7 @@ export function LoginForm() {
     try {
       const idToken = await getGoogleIdToken();
       login(await authApi.google(idToken));
+      await applyReferral();
       router.replace(target);
     } catch (err) {
       if (!(err instanceof GoogleLoginCancelled)) setError(err instanceof Error ? err.message : 'Login Google gagal');
@@ -66,6 +119,7 @@ export function LoginForm() {
     setError(null);
     try {
       login(await authApi.verifyOtp(phone, code));
+      await applyReferral();
       router.replace(target);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Verifikasi gagal');
@@ -90,6 +144,22 @@ export function LoginForm() {
               className="rounded-lg border border-slate-300 px-3 py-2"
             />
           </label>
+          {showReferral ? (
+            <label className="flex flex-col gap-1 text-sm">
+              Kode referral <span className="text-xs text-slate-500">(opsional, untuk pengguna baru)</span>
+              <input
+                value={referral}
+                onChange={(e) => setReferral(e.target.value.toUpperCase())}
+                placeholder="CARDBUS-NAMA"
+                maxLength={40}
+                className="rounded-lg border border-slate-300 px-3 py-2 font-mono uppercase tracking-wide"
+              />
+            </label>
+          ) : (
+            <button type="button" onClick={() => setShowReferral(true)} className="text-sm font-semibold text-brand">
+              Punya kode referral?
+            </button>
+          )}
           <button disabled={busy} className="w-full rounded-lg bg-brand py-2.5 font-semibold text-white disabled:opacity-60">
             {busy ? 'Mengirim…' : 'Kirim Kode OTP'}
           </button>

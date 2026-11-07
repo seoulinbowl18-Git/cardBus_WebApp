@@ -79,6 +79,7 @@ function Payment({ order: o }: { order: Order }) {
         <div>
           <p className="font-bold">Total bayar</p>
           <p className="text-xs text-muted">{methodLabel(o)}</p>
+          {o.discount ? <p className="text-xs font-semibold text-brand">Termasuk voucher − {formatRupiah(o.discount)}</p> : null}
         </div>
         <p className="text-xl font-extrabold text-brand-dark">{formatRupiah(o.total)}</p>
       </div>
@@ -158,6 +159,7 @@ function ETicket({ order: o }: { order: Order }) {
             <Row k="Kursi" v={o.seats.join(', ')} />
             <Row k="Penumpang" v={o.passengers.join(', ')} />
             <Row k="Dibayar" v={`${formatRupiah(o.total)} · ${methodLabel(o)}`} />
+            {o.discount ? <Row k="Voucher" v={`− ${formatRupiah(o.discount)}`} /> : null}
             {o.checkedInAt && <Row k="Check-in" v={formatDateTimeWib(o.checkedInAt)} />}
           </dl>
         </div>

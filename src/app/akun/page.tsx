@@ -54,8 +54,6 @@ export default function AccountPage() {
     }
   }
 
-  const soon = (what: string) => toast(`${what} segera hadir di CardBus Web. Untuk sekarang bisa dipakai di aplikasi CardBus.`);
-
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <ProfileHeader user={loggedIn ? user : null} busy={busy} onSave={save} />
@@ -80,8 +78,8 @@ export default function AccountPage() {
       )}
 
       <Menu>
-        <MenuItem icon="share" title="Ajak Teman" badge="Segera hadir" onClick={() => soon('Ajak Teman')} />
-        <MenuItem icon="voucher" title="Voucher & Kupon Saya" badge="Segera hadir" onClick={() => soon('Voucher & Kupon')} />
+        <MenuItem icon="share" title="Ajak Teman" subtitle="Bagikan kode referral, dapatkan voucher" href={loggedIn ? '/akun/ajak-teman' : '/masuk?next=/akun/ajak-teman'} />
+        <MenuItem icon="voucher" title="Voucher & Kupon Saya" subtitle="Voucher aktif & klaim kode promo" href={loggedIn ? '/akun/voucher' : '/masuk?next=/akun/voucher'} />
         <MenuItem icon="gift" title="Promo" href="/promo" />
         <MenuItem icon="support" title="Hubungi CS" subtitle="WhatsApp, telepon, atau email" onClick={openCsHelp} />
       </Menu>
