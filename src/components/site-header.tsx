@@ -22,7 +22,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
       <nav className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
         <Link href="/" aria-label="CardBus - Beranda" className="shrink-0">
-          <Image src="/brand/cardbus-header.png" alt="CardBus" width={552} height={100} priority className="h-7 w-auto sm:h-9" />
+          <Image src="/brand/cardbus-header.png" alt="CardBus" width={552} height={100} priority className="h-6 w-auto sm:h-8" />
         </Link>
         <div className="flex min-w-0 items-center gap-1 whitespace-nowrap text-sm font-medium sm:gap-2">
           <button onClick={openCsHelp} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-brand transition hover:bg-teal-soft">
