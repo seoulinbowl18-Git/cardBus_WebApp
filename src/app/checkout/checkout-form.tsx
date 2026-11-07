@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { BusPhoto } from '@/components/bus-photo';
 import { FacilityChips } from '@/components/facility-chips';
+import { SeatLayoutMap } from '@/components/seat-layout-map';
 import { SeatPicker } from '@/components/seat-picker';
 import { PoBadge } from '@/components/ui/po-badge';
 import { ApiError } from '@/lib/api/client';
@@ -66,8 +67,9 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
   // Backend belum punya GET /api/trips/:id → cari ulang rute & tanggal yang sama lalu ambil jadwalnya.
   const loadTrip = useCallback(async () => {
     try {
-      const list = await tripApi.search({ from, to, date });
-      const found = list.find((t) => t.id === tripId) ?? null;
+      // Sertakan titik naik/turun pilihan agar backend mengembalikan rute yang sama dengan hasil pencarian
+      const list = await tripApi.search({ from, to, date, ...(boardPoint && { boardPoint }), ...(dropPoint && { dropPoint }) });
+      const found = list.find((t) => String(t.id) === tripId) ?? null;
       setTrip(found);
       setLoadError(found ? null : 'Jadwal tidak ditemukan atau sudah tidak tersedia.');
       return found;
@@ -75,7 +77,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
       setLoadError(e instanceof ApiError ? e.message : 'Gagal memuat jadwal');
       return null;
     }
-  }, [tripId, from, to, date]);
+  }, [tripId, from, to, date, boardPoint, dropPoint]);
 
   useEffect(() => {
     loadTrip();
@@ -108,6 +110,14 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
     setTierKey(key);
     setSeats([]); // kursi terikat varian
     setSubmitError(null);
+  }
+
+  /** Dari denah: ketuk kursi varian lain → pindah varian dan pilih kursi itu. */
+  function changeTierWithSeat(key: string, seat: string) {
+    changeTier(key);
+    const accountName = user?.name;
+    if (accountName) setNames((n) => ({ ...n, [seat]: n[seat] || accountName }));
+    setSeats([seat]);
   }
 
   function toggleSeat(seat: string) {
@@ -254,7 +264,21 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
               })}
             </div>
           )}
-          {tier && <SeatPicker tier={tier} selected={seats} max={MAX_SEATS} onToggle={toggleSeat} />}
+          {tier &&
+            (trip.layout?.length ? (
+              // Denah per lantai dari backend (format prototipe): G1A Grand Captain, B1A lantai bawah, S1A sleeper, dst.
+              <SeatLayoutMap
+                layout={trip.layout}
+                tiers={trip.tiers}
+                tierKey={tier.key}
+                selected={seats}
+                max={MAX_SEATS}
+                onToggle={toggleSeat}
+                onTierChange={changeTierWithSeat}
+              />
+            ) : (
+              <SeatPicker tier={tier} selected={seats} max={MAX_SEATS} onToggle={toggleSeat} />
+            ))}
           {show(errors.seats)}
         </Step>
 

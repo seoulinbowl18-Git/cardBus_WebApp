@@ -8,6 +8,10 @@ const LABELS: Record<string, { label: string; icon: string }> = {
   makan: { label: 'Makan', icon: '🍱' },
   tv: { label: 'TV', icon: '📺' },
   kompartemen: { label: 'Kompartemen', icon: '🚪' },
+  dispenser: { label: 'Dispenser', icon: '💧' },
+  wifi: { label: 'Wi-Fi', icon: '📶' },
+  snack: { label: 'Snack', icon: '🍪' },
+  reclining: { label: 'Reclining', icon: '💺' },
 };
 
 export const facilityInfo = (code: string) => LABELS[code] ?? { label: code, icon: '•' };

@@ -65,6 +65,25 @@ export interface Trip {
   logo?: string | null;
   /** Kode fasilitas: ac, toilet, selimut, usb, legrest, makan, tv, kompartemen. */
   facilities?: string[];
+  /** Mis. "2-2", "2-1 · 21 kursi", "Exe Plus + Sleeper". */
+  seatType?: string | null;
+  /** Denah per lantai (format prototipe CardBus). Kosong di backend versi lama. */
+  layout?: SeatDeck[];
+}
+
+/** Satu sel denah: kursi / sleeper, lorong, atau judul bagian (satu baris sendiri). */
+export type SeatCell =
+  | { code: string; kind: 'seat' | 'bed'; tier: string; w?: number }
+  | { aisle: true; w?: number }
+  | { section: string; tier?: string; tiers?: string[] };
+
+export interface SeatDeck {
+  key: string;
+  name: string;
+  /** Label kepala denah, mis. "Pintu" / "Tangga" dan "Sopir" / "Depan". */
+  door?: string;
+  driver?: string;
+  rows: SeatCell[][];
 }
 
 export interface TripSearchQuery {

@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'Checkout' };
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
 
-// /checkout?tripId=..&from=..&to=..&date=YYYY-MM-DD[&tier=..] — dibuka dari kartu jadwal di /cari.
+// /checkout?tripId=..&from=..&to=..&date=YYYY-MM-DD[&boardPoint=..][&dropPoint=..][&tier=..] — dibuka dari kartu jadwal di /cari.
 export default async function CheckoutPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
   const params = {
@@ -20,7 +20,8 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
     boardPoint: one(sp.boardPoint) || undefined,
     dropPoint: one(sp.dropPoint) || undefined,
   };
-  const valid = /^[a-f0-9]{24}$/i.test(params.tripId) && params.from && params.to && /^\d{4}-\d{2}-\d{2}$/.test(params.date);
+  // ID jadwal: angka (backend PostgreSQL) atau 24 heksa (backend MongoDB lama)
+  const valid = /^(\d{1,18}|[a-f0-9]{24})$/i.test(params.tripId) && params.from && params.to && /^\d{4}-\d{2}-\d{2}$/.test(params.date);
 
   return (
     <section className="space-y-4">
