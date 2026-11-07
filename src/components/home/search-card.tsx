@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_ROUTE } from '@/lib/home-content';
 import { dateParts, todayWib } from '@/lib/format';
@@ -22,7 +22,6 @@ export function SearchCard() {
   const [from, setFrom] = useState<Place>({ city: DEFAULT_ROUTE.from, point: null });
   const [to, setTo] = useState<Place>({ city: DEFAULT_ROUTE.to, point: null });
   const [date, setDate] = useState(today);
-  const dateRef = useRef<HTMLInputElement>(null);
   const sameCity = from.city === to.city;
   const p = dateParts(date);
 
@@ -30,17 +29,6 @@ export function SearchCard() {
   function swap() {
     setFrom({ city: to.city, point: pointAllowed(locations, to, 'board') });
     setTo({ city: from.city, point: pointAllowed(locations, from, 'drop') });
-  }
-
-  function openDatePicker() {
-    const el = dateRef.current;
-    if (!el) return;
-    try {
-      el.showPicker(); // Chrome, Edge, Safari 16+, Firefox
-    } catch {
-      el.focus();
-      el.click();
-    }
   }
 
   function submit(e: React.FormEvent) {
@@ -83,13 +71,8 @@ export function SearchCard() {
         </div>
 
         {/* TANGGAL PERJALANAN */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={openDatePicker}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openDatePicker())}
-          aria-label={`Tanggal perjalanan: ${p.dow}, ${p.day} ${p.mon}. Ubah`}
-          className="relative flex h-[78px] min-w-0 cursor-pointer flex-col justify-center rounded-2xl border border-line bg-white px-4 py-2.5 transition hover:border-brand focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 lg:flex-1"
+        <label
+          className="relative flex h-[78px] min-w-0 cursor-pointer flex-col justify-center rounded-2xl border border-line bg-white px-4 py-2.5 transition hover:border-brand focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30 lg:flex-1"
         >
           <span className="block text-[11px] font-semibold uppercase tracking-wider text-faint">Tanggal perjalanan</span>
           <span className="mt-0.5 flex items-center gap-2">
@@ -105,19 +88,28 @@ export function SearchCard() {
           <span className="mt-0.5 block truncate pl-7 text-xs text-faint">
             {date === today ? 'Hari ini' : `${p.dow === 'Min' ? 'Minggu' : p.dow}, ${p.day} ${p.mon}`}
           </span>
-          {/* Input asli: pemilih tanggal bawaan browser, tetap terkirim di form GET */}
+          {/*
+            Input tanggal asli menutupi seluruh kotak (transparan): ketukan di mana pun langsung
+            membuka pemilih tanggal bawaan — wajib untuk Safari iPad/iPhone yang menolak membuka
+            pemilih dari input tersembunyi. Chrome/Edge desktop dibantu showPicker().
+          */}
           <input
-            ref={dateRef}
             type="date"
             name="date"
             min={today}
             value={date}
             onChange={(e) => e.target.value && e.target.value >= today && setDate(e.target.value)}
-            tabIndex={-1}
-            aria-hidden
-            className="pointer-events-none absolute bottom-0 left-4 h-px w-px opacity-0"
+            onClick={(e) => {
+              try {
+                e.currentTarget.showPicker();
+              } catch {
+                /* browser membuka pemilihnya sendiri */
+              }
+            }}
+            aria-label={`Tanggal perjalanan: ${p.dow}, ${p.day} ${p.mon}. Ubah`}
+            className="absolute inset-0 z-10 h-full w-full cursor-pointer appearance-none rounded-2xl text-base opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
           />
-        </div>
+        </label>
 
         {/* Cari Tiket */}
         <button
