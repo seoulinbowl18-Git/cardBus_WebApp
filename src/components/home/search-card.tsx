@@ -2,47 +2,55 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CITIES, DEFAULT_ROUTE } from '@/lib/home-content';
-import { addDays, todayWib } from '@/lib/format';
-
-const DOW = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-
-/** Bagian tanggal dari "YYYY-MM-DD" tanpa terpengaruh zona waktu perangkat. */
-function parts(iso: string) {
-  const d = new Date(`${iso}T00:00:00Z`);
-  return { dow: DOW[d.getUTCDay()], day: d.getUTCDate(), mon: MON[d.getUTCMonth()] };
-}
+import { DEFAULT_ROUTE } from '@/lib/home-content';
+import { addDays, dateParts as parts, todayWib } from '@/lib/format';
+import { pointAllowed, useLocations, type Place } from '@/lib/locations';
+import { LocationField } from './location-picker';
 
 /**
- * Kartu cari tiket, padanan SearchCardWidget di mobile: Dari / Ke dengan tombol tukar,
- * pilihan 7 hari ke depan (+ tanggal lain), dan tombol emas "Cari tiket".
- * Tetap berupa <form method=GET> ke /cari, jadi hasilnya bisa dibagikan sebagai link.
+ * Kartu cari tiket, padanan SearchCardWidget di mobile: Dari / Ke (kota atau titik naik/turun
+ * tertentu, dari GET /api/locations) dengan tombol tukar, pilihan 7 hari ke depan (+ tanggal lain),
+ * dan tombol emas "Cari tiket". Hasilnya link /cari?from&to&date[&boardPoint][&dropPoint].
  */
 export function SearchCard() {
   const router = useRouter();
   const today = todayWib();
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(today, i)), [today]);
-  const [from, setFrom] = useState(DEFAULT_ROUTE.from);
-  const [to, setTo] = useState(DEFAULT_ROUTE.to);
+  const locations = useLocations();
+  const [from, setFrom] = useState<Place>({ city: DEFAULT_ROUTE.from, point: null });
+  const [to, setTo] = useState<Place>({ city: DEFAULT_ROUTE.to, point: null });
   const [date, setDate] = useState(today);
-  const sameCity = from.trim() !== '' && from.trim().toLowerCase() === to.trim().toLowerCase();
+  const sameCity = from.city === to.city;
   const customDate = !days.includes(date);
+
+  /** Tukar asal & tujuan; titik yang tidak melayani arah sebaliknya dikembalikan ke "semua titik". */
+  function swap() {
+    setFrom({ city: to.city, point: pointAllowed(locations, to, 'board') });
+    setTo({ city: from.city, point: pointAllowed(locations, from, 'drop') });
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (sameCity || !from.trim() || !to.trim()) return;
-    router.push(`/cari?${new URLSearchParams({ from: from.trim(), to: to.trim(), date })}`);
+    if (sameCity) return;
+    const q = new URLSearchParams({ from: from.city, to: to.city, date });
+    if (from.point) q.set('boardPoint', from.point);
+    if (to.point) q.set('dropPoint', to.point);
+    router.push(`/cari?${q}`);
   }
 
   return (
     <form action="/cari" onSubmit={submit} className="min-w-0 space-y-4 rounded-[22px] bg-white p-4 shadow-[0_12px_32px_rgba(6,78,82,0.14)] sm:p-5">
       <div className="relative space-y-2.5">
-        <CityField label="Dari" name="from" value={from} onChange={setFrom} pin="bg-brand" hint={`Semua titik naik di ${from || '…'}`} />
-        <CityField label="Ke" name="to" value={to} onChange={setTo} pin="bg-gold" hint={`Semua titik turun di ${to || '…'}`} />
+        <LocationField label="Dari" value={from} onChange={setFrom} pin="bg-brand" locations={locations} />
+        <LocationField label="Ke" value={to} onChange={setTo} pin="bg-gold" locations={locations} />
+        {/* Tanpa JavaScript, form GET tetap mengirim pilihan ini */}
+        <input type="hidden" name="from" value={from.city} />
+        <input type="hidden" name="to" value={to.city} />
+        {from.point && <input type="hidden" name="boardPoint" value={from.point} />}
+        {to.point && <input type="hidden" name="dropPoint" value={to.point} />}
         <button
           type="button"
-          onClick={() => { setFrom(to); setTo(from); }}
+          onClick={swap}
           aria-label="Tukar asal dan tujuan"
           title="Tukar asal dan tujuan"
           className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border-[3px] border-white bg-[#d9f0ee] text-brand shadow transition hover:bg-brand hover:text-white"
@@ -51,9 +59,6 @@ export function SearchCard() {
             <path d="M8 4v16M8 4 4.5 7.5M8 4l3.5 3.5M16 20V4m0 16-3.5-3.5M16 20l3.5-3.5" />
           </svg>
         </button>
-        <datalist id="cardbus-cities">
-          {CITIES.map((c) => <option key={c} value={c} />)}
-        </datalist>
       </div>
       {sameCity && <p className="text-xs font-semibold text-red-700">Kota asal dan tujuan tidak boleh sama.</p>}
 
@@ -110,27 +115,5 @@ export function SearchCard() {
         Cari tiket
       </button>
     </form>
-  );
-}
-
-function CityField(props: { label: string; name: string; value: string; onChange: (v: string) => void; pin: string; hint: string }) {
-  return (
-    <label className="flex items-center gap-3 rounded-2xl border border-line bg-[#f8fbfb] py-2.5 pl-3 pr-16 focus-within:border-brand">
-      <span className={`h-3 w-3 shrink-0 rounded-full ring-4 ring-white ${props.pin}`} aria-hidden />
-      <span className="min-w-0 flex-1">
-        <span className="block text-[11px] font-bold uppercase tracking-wide text-muted">{props.label}</span>
-        <input
-          name={props.name}
-          value={props.value}
-          onChange={(e) => props.onChange(e.target.value)}
-          list="cardbus-cities"
-          required
-          minLength={2}
-          autoComplete="off"
-          className="w-full bg-transparent text-base font-extrabold text-ink outline-none"
-        />
-        <span className="block truncate text-xs text-faint">{props.hint}</span>
-      </span>
-    </label>
   );
 }

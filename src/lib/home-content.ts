@@ -33,12 +33,6 @@ export interface FeaturedProduct {
   comingSoon?: boolean;
 }
 
-/** Kota yang dilayani (sama dengan MockData.cities di mobile). */
-export const CITIES = [
-  'Solo', 'Wonogiri', 'Jakarta', 'Tangerang', 'Bogor', 'Bekasi', 'Depok',
-  'Semarang', 'Malang', 'Yogyakarta', 'Surabaya', 'Pekanbaru', 'Bengkulu',
-];
-
 /** Rute awal kartu cari (default TicketSearchModel di mobile). */
 export const DEFAULT_ROUTE = { from: 'Solo', to: 'Jakarta' };
 

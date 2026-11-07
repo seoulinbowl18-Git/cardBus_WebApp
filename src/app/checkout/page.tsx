@@ -17,6 +17,8 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
     to: one(sp.to),
     date: one(sp.date),
     tier: one(sp.tier) || undefined,
+    boardPoint: one(sp.boardPoint) || undefined,
+    dropPoint: one(sp.dropPoint) || undefined,
   };
   const valid = /^[a-f0-9]{24}$/i.test(params.tripId) && params.from && params.to && /^\d{4}-\d{2}-\d{2}$/.test(params.date);
 

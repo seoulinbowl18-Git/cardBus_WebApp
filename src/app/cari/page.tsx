@@ -31,7 +31,15 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   // Tanpa tanggal (mis. dari banner promo di Beranda) = hari ini.
   const date = one(sp.date) || today;
   const sort: SortKey = one(sp.sort) in SORTS ? (one(sp.sort) as SortKey) : 'cheapest';
-  const href = (q: Record<string, string>) => `/cari?${new URLSearchParams({ from, to, date, sort, ...q })}`;
+  // Titik naik / turun pilihan (opsional): hanya jadwal yang naik/turun di titik ini
+  const boardPoint = one(sp.boardPoint).trim();
+  const dropPoint = one(sp.dropPoint).trim();
+  const points = { ...(boardPoint && { boardPoint }), ...(dropPoint && { dropPoint }) };
+  /** Link ke halaman ini dengan sebagian parameter diganti; nilai kosong = parameter dibuang. */
+  const href = (q: Record<string, string>) => {
+    const all: Record<string, string> = { from, to, date, sort, ...points, ...q };
+    return `/cari?${new URLSearchParams(Object.entries(all).filter(([, v]) => v))}`;
+  };
 
   let trips: Trip[] = [];
   let error: string | null = null;
@@ -39,7 +47,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
     error = 'Lengkapi kota asal, tujuan, dan tanggal.';
   } else {
     try {
-      trips = await tripApi.search({ from, to, date });
+      trips = await tripApi.search({ from, to, date, ...points });
+      // Backend lama belum mengenal filter titik: saring juga di sini agar hasil tetap spesifik
+      trips = trips.filter((t) => (!boardPoint || t.boardPoint === boardPoint) && (!dropPoint || t.dropPoint === dropPoint));
     } catch (e) {
       error = e instanceof ApiError ? e.message : 'Gagal memuat jadwal';
     }
@@ -58,6 +68,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               {from || '…'} → {to || '…'}
             </h1>
             <p className="text-sm text-[#cfe9e6]">{shortDate(date)} · {trips.length} jadwal</p>
+            {(boardPoint || dropPoint) && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {boardPoint && <PointChip label={`Naik di ${boardPoint}`} clear={href({ boardPoint: '' })} />}
+                {dropPoint && <PointChip label={`Turun di ${dropPoint}`} clear={href({ dropPoint: '' })} />}
+              </div>
+            )}
           </div>
           <Link href="/" className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold hover:bg-white/25">
             Ubah
@@ -103,7 +119,14 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       {!error && trips.length === 0 && (
         <div className="rounded-2xl bg-white p-8 text-center">
           <p className="font-bold">Belum ada jadwal untuk rute & tanggal ini.</p>
-          <p className="mt-1 text-sm text-muted">Coba pilih tanggal lain di atas, atau ubah rute.</p>
+          {boardPoint || dropPoint ? (
+            <p className="mt-1 text-sm text-muted">
+              Tidak ada bus yang {boardPoint ? `naik di ${boardPoint}` : ''}{boardPoint && dropPoint ? ' dan ' : ''}{dropPoint ? `turun di ${dropPoint}` : ''}.{' '}
+              <Link href={href({ boardPoint: '', dropPoint: '' })} className="font-bold text-brand underline">Lihat semua titik di {from} → {to}</Link>
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-muted">Coba pilih tanggal lain di atas, atau ubah rute.</p>
+          )}
         </div>
       )}
       <div className="grid gap-2.5">
@@ -111,7 +134,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           seatsLeft(t) > 0 ? (
             <Link
               key={`${t.id}-${t.date}`}
-              href={`/checkout?${new URLSearchParams({ tripId: t.id, from, to, date })}`}
+              href={`/checkout?${new URLSearchParams({ tripId: t.id, from, to, date, ...points })}`}
               className="block rounded-2xl transition hover:-translate-y-0.5 hover:shadow-md"
             >
               <TripCard trip={t} />
@@ -122,5 +145,17 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         )}
       </div>
     </section>
+  );
+}
+
+/** Penanda titik naik/turun aktif, dengan tombol × untuk melihat semua titik lagi. */
+function PointChip({ label, clear }: { label: string; clear: string }) {
+  return (
+    <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/15 py-1 pl-3 pr-1 text-xs font-bold">
+      <span className="truncate">{label}</span>
+      <Link href={clear} aria-label={`Hapus filter ${label}`} className="grid h-5 w-5 shrink-0 place-items-center rounded-full hover:bg-white/25">
+        ×
+      </Link>
+    </span>
   );
 }

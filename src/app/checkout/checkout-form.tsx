@@ -27,6 +27,9 @@ interface Props {
   to: string;
   date: string;
   tier?: string;
+  /** Titik naik/turun dari hasil pencarian, untuk kembali ke daftar yang sama. */
+  boardPoint?: string;
+  dropPoint?: string;
 }
 
 /** Keterangan metode, sama dengan PayMethod.subtitle di mobile. */
@@ -43,7 +46,7 @@ const METHOD_HINT: Record<PaymentMethod, string> = {
  * PaymentScreen): varian & kursi → nama penumpang → kontak → metode bayar → setuju S&K →
  * POST /api/payments/create. Harga final dihitung server; total di sini hanya perkiraan.
  */
-export function CheckoutForm({ tripId, from, to, date, tier: initialTier }: Props) {
+export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardPoint, dropPoint }: Props) {
   const router = useRouter();
   const { user } = useAuth();
 
@@ -172,7 +175,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier }: Prop
     }
   }
 
-  const backHref = `/cari?${new URLSearchParams({ from, to, date })}`;
+  const backHref = `/cari?${new URLSearchParams({ from, to, date, ...(boardPoint && { boardPoint }), ...(dropPoint && { dropPoint }) })}`;
   if (loadError && !trip) {
     return (
       <div className="space-y-2 rounded-xl bg-red-50 p-4 text-red-700">

@@ -1,0 +1,550 @@
+{
+ "cities": [
+  {
+   "name": "Wonogiri",
+   "routes": 656
+  },
+  {
+   "name": "Tangerang",
+   "routes": 646
+  },
+  {
+   "name": "Jakarta",
+   "routes": 644
+  },
+  {
+   "name": "Bogor",
+   "routes": 622
+  },
+  {
+   "name": "Salatiga",
+   "routes": 620
+  },
+  {
+   "name": "Semarang",
+   "routes": 620
+  },
+  {
+   "name": "Bekasi",
+   "routes": 618
+  },
+  {
+   "name": "Solo",
+   "routes": 617
+  },
+  {
+   "name": "Malang",
+   "routes": 616
+  },
+  {
+   "name": "Depok",
+   "routes": 612
+  },
+  {
+   "name": "Sukoharjo",
+   "routes": 612
+  },
+  {
+   "name": "Surabaya",
+   "routes": 608
+  },
+  {
+   "name": "Blora",
+   "routes": 606
+  },
+  {
+   "name": "Bojonegoro",
+   "routes": 606
+  },
+  {
+   "name": "Cepu",
+   "routes": 606
+  },
+  {
+   "name": "Pacitan",
+   "routes": 606
+  },
+  {
+   "name": "Ponorogo",
+   "routes": 606
+  },
+  {
+   "name": "Jepara",
+   "routes": 604
+  },
+  {
+   "name": "Kudus",
+   "routes": 604
+  },
+  {
+   "name": "Pati",
+   "routes": 604
+  },
+  {
+   "name": "Bandung",
+   "routes": 600
+  },
+  {
+   "name": "Denpasar",
+   "routes": 600
+  },
+  {
+   "name": "Purwokerto",
+   "routes": 600
+  },
+  {
+   "name": "Yogyakarta",
+   "routes": 600
+  },
+  {
+   "name": "Lampung",
+   "routes": 2
+  },
+  {
+   "name": "Bengkulu",
+   "routes": 1
+  },
+  {
+   "name": "Jambi",
+   "routes": 1
+  },
+  {
+   "name": "Pekanbaru",
+   "routes": 1
+  }
+ ],
+ "points": [
+  {
+   "name": "Terminal Baranangsiang",
+   "city": "Bogor",
+   "area": "Bogor",
+   "board": true,
+   "drop": true,
+   "routes": 622
+  },
+  {
+   "name": "Terminal Mangkang",
+   "city": "Semarang",
+   "area": "Semarang",
+   "board": true,
+   "drop": true,
+   "routes": 620
+  },
+  {
+   "name": "Terminal Tingkir",
+   "city": "Salatiga",
+   "area": "Salatiga",
+   "board": true,
+   "drop": true,
+   "routes": 620
+  },
+  {
+   "name": "Terminal Arjosari",
+   "city": "Malang",
+   "area": "Malang",
+   "board": true,
+   "drop": true,
+   "routes": 616
+  },
+  {
+   "name": "Terminal Jatijajar",
+   "city": "Depok",
+   "area": "Depok",
+   "board": true,
+   "drop": true,
+   "routes": 612
+  },
+  {
+   "name": "Terminal Sukoharjo",
+   "city": "Sukoharjo",
+   "area": "Sukoharjo",
+   "board": true,
+   "drop": true,
+   "routes": 612
+  },
+  {
+   "name": "Terminal Blora",
+   "city": "Blora",
+   "area": "Blora",
+   "board": true,
+   "drop": true,
+   "routes": 606
+  },
+  {
+   "name": "Terminal Cepu",
+   "city": "Cepu",
+   "area": "Cepu",
+   "board": true,
+   "drop": true,
+   "routes": 606
+  },
+  {
+   "name": "Terminal Pacitan",
+   "city": "Pacitan",
+   "area": "Pacitan",
+   "board": true,
+   "drop": true,
+   "routes": 606
+  },
+  {
+   "name": "Terminal Rajekwesi",
+   "city": "Bojonegoro",
+   "area": "Bojonegoro",
+   "board": true,
+   "drop": true,
+   "routes": 606
+  },
+  {
+   "name": "Terminal Seloaji",
+   "city": "Ponorogo",
+   "area": "Ponorogo",
+   "board": true,
+   "drop": true,
+   "routes": 606
+  },
+  {
+   "name": "Terminal Jati",
+   "city": "Kudus",
+   "area": "Kudus",
+   "board": true,
+   "drop": true,
+   "routes": 604
+  },
+  {
+   "name": "Terminal Jepara",
+   "city": "Jepara",
+   "area": "Jepara",
+   "board": true,
+   "drop": true,
+   "routes": 604
+  },
+  {
+   "name": "Terminal Kembang Joyo",
+   "city": "Pati",
+   "area": "Pati",
+   "board": true,
+   "drop": true,
+   "routes": 604
+  },
+  {
+   "name": "Terminal Bulupitu",
+   "city": "Purwokerto",
+   "area": "Purwokerto",
+   "board": true,
+   "drop": true,
+   "routes": 600
+  },
+  {
+   "name": "Terminal Giwangan",
+   "city": "Yogyakarta",
+   "area": "Yogyakarta (Jogja)",
+   "board": true,
+   "drop": true,
+   "routes": 600
+  },
+  {
+   "name": "Terminal Mengwi",
+   "city": "Denpasar",
+   "area": "Denpasar (Bali)",
+   "board": true,
+   "drop": true,
+   "routes": 600
+  },
+  {
+   "name": "Medaeng",
+   "city": "Surabaya",
+   "area": "Surabaya",
+   "board": true,
+   "drop": true,
+   "routes": 304
+  },
+  {
+   "name": "Terminal Bungurasih",
+   "city": "Surabaya",
+   "area": "Surabaya",
+   "board": true,
+   "drop": true,
+   "routes": 304
+  },
+  {
+   "name": "Terminal Kartasura",
+   "city": "Solo",
+   "area": "Kartasura",
+   "board": true,
+   "drop": true,
+   "routes": 226
+  },
+  {
+   "name": "Terminal Tirtonadi",
+   "city": "Solo",
+   "area": "Solo",
+   "board": true,
+   "drop": true,
+   "routes": 220
+  },
+  {
+   "name": "Rajeg",
+   "city": "Tangerang",
+   "area": "Tangerang",
+   "board": true,
+   "drop": true,
+   "routes": 189
+  },
+  {
+   "name": "Bulak Kapal",
+   "city": "Bekasi",
+   "area": "Bekasi",
+   "board": true,
+   "drop": true,
+   "routes": 188
+  },
+  {
+   "name": "Jatiwarna",
+   "city": "Bekasi",
+   "area": "Bekasi",
+   "board": true,
+   "drop": true,
+   "routes": 188
+  },
+  {
+   "name": "Grogol",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": true,
+   "routes": 187
+  },
+  {
+   "name": "Ngadirojo",
+   "city": "Wonogiri",
+   "area": "Wonogiri",
+   "board": true,
+   "drop": true,
+   "routes": 187
+  },
+  {
+   "name": "Dipatiukur",
+   "city": "Bandung",
+   "area": "Bandung",
+   "board": true,
+   "drop": true,
+   "routes": 185
+  },
+  {
+   "name": "Pasteur",
+   "city": "Bandung",
+   "area": "Bandung",
+   "board": true,
+   "drop": true,
+   "routes": 185
+  },
+  {
+   "name": "Tugu Kartosuro",
+   "city": "Solo",
+   "area": "Kartasura",
+   "board": true,
+   "drop": true,
+   "routes": 171
+  },
+  {
+   "name": "Terminal Poris",
+   "city": "Tangerang",
+   "area": "Tangerang",
+   "board": true,
+   "drop": true,
+   "routes": 162
+  },
+  {
+   "name": "Terminal Tanjung Priok",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": true,
+   "routes": 141
+  },
+  {
+   "name": "BSD",
+   "city": "Tangerang",
+   "area": "Tangerang",
+   "board": true,
+   "drop": true,
+   "routes": 137
+  },
+  {
+   "name": "Jatisrono",
+   "city": "Wonogiri",
+   "area": "Wonogiri",
+   "board": true,
+   "drop": true,
+   "routes": 135
+  },
+  {
+   "name": "Pasar Wonogiri",
+   "city": "Wonogiri",
+   "area": "Wonogiri",
+   "board": true,
+   "drop": true,
+   "routes": 130
+  },
+  {
+   "name": "Bekasi Timur",
+   "city": "Bekasi",
+   "area": "Bekasi",
+   "board": true,
+   "drop": true,
+   "routes": 124
+  },
+  {
+   "name": "Cibitung",
+   "city": "Bekasi",
+   "area": "Bekasi",
+   "board": true,
+   "drop": true,
+   "routes": 118
+  },
+  {
+   "name": "Balubur Town Square",
+   "city": "Bandung",
+   "area": "Bandung",
+   "board": true,
+   "drop": true,
+   "routes": 115
+  },
+  {
+   "name": "Buahbatu",
+   "city": "Bandung",
+   "area": "Bandung",
+   "board": true,
+   "drop": true,
+   "routes": 115
+  },
+  {
+   "name": "Purwantoro",
+   "city": "Wonogiri",
+   "area": "Wonogiri",
+   "board": true,
+   "drop": true,
+   "routes": 115
+  },
+  {
+   "name": "Terminal Lebak Bulus",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": true,
+   "routes": 106
+  },
+  {
+   "name": "Pondok Pinang",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": true,
+   "routes": 93
+  },
+  {
+   "name": "Cilenggang",
+   "city": "Tangerang",
+   "area": "Tangerang",
+   "board": true,
+   "drop": true,
+   "routes": 90
+  },
+  {
+   "name": "Batu",
+   "city": "Wonogiri",
+   "area": "Wonogiri",
+   "board": true,
+   "drop": true,
+   "routes": 89
+  },
+  {
+   "name": "Pasar Rebo",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": true,
+   "routes": 70
+  },
+  {
+   "name": "Pakulonan",
+   "city": "Tangerang",
+   "area": "Tangerang",
+   "board": true,
+   "drop": true,
+   "routes": 68
+  },
+  {
+   "name": "Semanggi",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": true,
+   "routes": 24
+  },
+  {
+   "name": "Terminal Pulo Gebang",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": true,
+   "routes": 11
+  },
+  {
+   "name": "Terminal Kalideres",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": true,
+   "routes": 5
+  },
+  {
+   "name": "Cikini",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": true,
+   "routes": 4
+  },
+  {
+   "name": "Terminal Kampung Rambutan",
+   "city": "Jakarta",
+   "area": "Jakarta",
+   "board": true,
+   "drop": false,
+   "routes": 3
+  },
+  {
+   "name": "Terminal Rajabasa",
+   "city": "Lampung",
+   "area": "Lampung",
+   "board": false,
+   "drop": true,
+   "routes": 2
+  },
+  {
+   "name": "Terminal Air Sebakul",
+   "city": "Bengkulu",
+   "area": "Bengkulu",
+   "board": false,
+   "drop": true,
+   "routes": 1
+  },
+  {
+   "name": "Terminal Alam Barajo",
+   "city": "Jambi",
+   "area": "Jambi",
+   "board": false,
+   "drop": true,
+   "routes": 1
+  },
+  {
+   "name": "Terminal BRPS Pekanbaru",
+   "city": "Pekanbaru",
+   "area": "Pekanbaru",
+   "board": false,
+   "drop": true,
+   "routes": 1
+  }
+ ]
+}

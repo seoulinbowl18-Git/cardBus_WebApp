@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   CreateOrderBody,
+  Locations,
   LoginResponse,
   Order,
   SendOtpResponse,
@@ -26,6 +27,11 @@ export const userApi = {
 
 export const tripApi = {
   search: (q: TripSearchQuery, signal?: AbortSignal) => api.get<Trip[]>('/api/trips', { ...q }, signal),
+};
+
+export const locationApi = {
+  /** Kota & titik naik/turun dari rute jadwal aktif (cache 60 detik di backend). */
+  list: (signal?: AbortSignal) => api.get<Locations>('/api/locations', undefined, signal),
 };
 
 export const orderApi = {

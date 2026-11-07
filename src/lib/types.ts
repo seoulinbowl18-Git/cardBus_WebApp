@@ -72,6 +72,25 @@ export interface TripSearchQuery {
   to: string;
   date: string; // YYYY-MM-DD
   poId?: string;
+  /** Hanya jadwal yang naik / turun di titik ini (nama dari GET /api/locations). */
+  boardPoint?: string;
+  dropPoint?: string;
+}
+
+/** GET /api/locations: kota & titik naik/turun yang dilayani jadwal aktif. */
+export interface LocationPoint {
+  name: string;
+  city: string;
+  area: string;
+  /** Bisa dipakai sebagai titik naik / titik turun. */
+  board: boolean;
+  drop: boolean;
+  routes: number;
+}
+
+export interface Locations {
+  cities: { name: string; routes: number }[];
+  points: LocationPoint[];
 }
 
 export type PaymentMethod = 'qris' | 'va_bca' | 'va_bri' | 'va_bni' | 'va_mandiri';
