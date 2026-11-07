@@ -17,3 +17,13 @@
 body {
   @apply bg-[#f4f7f7] text-ink antialiased;
 }
+
+/* Hero selebar layar (w-screen) tidak boleh memunculkan gulir horizontal */
+html,
+body {
+  overflow-x: clip;
+}
+
+html {
+  scroll-behavior: smooth;
+}

@@ -10,21 +10,34 @@ import { FEATURED, SPECIAL_PROMOS, TOP_PROMOS } from '@/lib/home-content';
 export default function HomePage() {
   return (
     <div className="space-y-8">
-      <section className="relative -mx-4 -mt-8 overflow-hidden rounded-b-[28px] bg-[linear-gradient(135deg,#0a8c84_0%,#087f78_35%,#064e52_100%)] px-4 pb-6 pt-6 sm:mx-0 sm:mt-0 sm:rounded-[28px] sm:p-8">
-        {/* Jalan melengkung samar, seperti _RoadPainter di mobile */}
-        <svg className="pointer-events-none absolute -bottom-6 right-0 h-48 w-80 text-white/10" viewBox="0 0 320 190" fill="none" aria-hidden>
-          <path d="M130 210C180 130 240 80 340 60" stroke="currentColor" strokeWidth={34} strokeLinecap="round" />
-        </svg>
-        <div className="relative grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-center lg:gap-10">
-          <div className="space-y-2">
-            <Greeting />
-            <p className="text-sm text-white/80 sm:text-base">Tiket Bus, Lebih Mudah. Pilih kursi sendiri, bayar QRIS atau Virtual Account.</p>
+      {/* Hero selebar layar: sapaan + bilah cari horizontal */}
+      <section className="relative -mt-8 ml-[calc(50%-50vw)] w-screen">
+        <div className="relative overflow-hidden rounded-b-[28px] bg-[linear-gradient(100deg,#04454a_0%,#0a6c66_32%,#0f857d_58%,#4f968f_100%)] sm:rounded-none">
+          {/* Jalan melengkung samar, seperti _RoadPainter di mobile */}
+          <svg className="pointer-events-none absolute -bottom-6 right-0 h-48 w-80 text-white/10" viewBox="0 0 320 190" fill="none" aria-hidden>
+            <path d="M130 210C180 130 240 80 340 60" stroke="currentColor" strokeWidth={34} strokeLinecap="round" />
+          </svg>
+          <div className="relative mx-auto grid max-w-[1360px] grid-cols-[minmax(0,1fr)] items-center gap-5 px-4 pb-12 pt-6 sm:px-8 sm:pb-16 sm:pt-12 lg:pt-14 2xl:grid-cols-[minmax(0,0.62fr)_minmax(0,2fr)] 2xl:gap-12 2xl:py-20">
+            <div className="space-y-2">
+              <Greeting />
+              <p className="max-w-md text-sm text-white/85 sm:text-base">Tiket Bus, Lebih Mudah. Pilih kursi sendiri, bayar QRIS atau Virtual Account.</p>
+            </div>
+            <SearchCard />
           </div>
-          <SearchCard />
         </div>
+        {/* Panah bawah mengambang: lanjut ke Promo & Info */}
+        <a
+          href="#promo"
+          aria-label="Lihat promo dan jadwal pilihan"
+          className="absolute bottom-0 left-1/2 grid h-11 w-11 -translate-x-1/2 translate-y-1/2 place-items-center rounded-full border border-line bg-white text-muted shadow-md transition hover:text-brand"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </a>
       </section>
 
-      <section>
+      <section id="promo" className="scroll-mt-24 pt-2">
         <SectionTitle title="Promo & Info" />
         <PromoRow promos={TOP_PROMOS} tall />
       </section>

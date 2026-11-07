@@ -7,9 +7,9 @@ import type { Locations } from '@/lib/types';
 interface FieldProps {
   label: 'Dari' | 'Ke';
   value: Place;
-  pin: string;
   locations: Locations | null;
   onChange: (p: Place) => void;
+  className?: string;
 }
 
 const PinIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
@@ -27,7 +27,7 @@ const CityIcon = () => (
  * Kotak "Dari" / "Ke" yang bisa diklik (padanan LocationField + PointPickerScreen di mobile).
  * Membuka daftar kota & titik naik/turun dari backend, bisa dicari dengan mengetik.
  */
-export function LocationField({ label, value, pin, locations, onChange }: FieldProps) {
+export function LocationField({ label, value, locations, onChange, className = '' }: FieldProps) {
   const [open, setOpen] = useState(false);
   const kind = label === 'Dari' ? 'board' : 'drop';
   const verb = kind === 'board' ? 'naik' : 'turun';
@@ -38,14 +38,14 @@ export function LocationField({ label, value, pin, locations, onChange }: FieldP
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-label={`${label}: ${value.point ? `${value.point}, ${value.city}` : value.city}. Ubah`}
-        className="flex w-full items-center gap-3 rounded-2xl border border-line bg-[#f8fbfb] py-2.5 pl-3 pr-16 text-left transition hover:border-brand focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
+        className={`group flex min-w-0 flex-col justify-center rounded-2xl border border-line bg-white px-4 py-2.5 text-left transition hover:border-brand focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 ${className}`}
       >
-        <span className={`h-3 w-3 shrink-0 rounded-full ring-4 ring-white ${pin}`} aria-hidden />
-        <span className="min-w-0 flex-1">
-          <span className="block text-[11px] font-bold uppercase tracking-wide text-muted">{label}</span>
-          <span className="block truncate text-base font-extrabold text-ink">{value.point ?? value.city}</span>
-          <span className="block truncate text-xs text-faint">{value.point ? value.city : `Semua titik ${verb} di ${value.city}`}</span>
+        <span className="block text-[11px] font-semibold uppercase tracking-wider text-faint">{label}</span>
+        <span className="mt-0.5 flex min-w-0 items-center gap-2">
+          <PinIcon className="h-5 w-5 shrink-0 text-brand" />
+          <span className="truncate text-lg font-semibold leading-tight text-ink">{value.point ?? value.city}</span>
         </span>
+        <span className="mt-0.5 block truncate pl-7 text-xs text-faint">{value.point ? value.city : `Semua titik ${verb} di ${value.city}`}</span>
       </button>
       {open && (
         <PickerDialog
