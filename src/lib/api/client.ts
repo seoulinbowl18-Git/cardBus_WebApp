@@ -17,6 +17,8 @@ type Query = Record<string, string | number | undefined | null>;
 interface RequestOptions {
   query?: Query;
   body?: unknown;
+  /** File mentah (mis. gambar); dikirim apa adanya dengan Content-Type dari file. */
+  file?: Blob;
   signal?: AbortSignal;
 }
 
@@ -55,9 +57,10 @@ async function request<T>(session: Session, method: string, path: string, opts: 
       headers: {
         Accept: 'application/json',
         ...(opts.body !== undefined && { 'Content-Type': 'application/json' }),
+        ...(opts.file && { 'Content-Type': opts.file.type }),
         ...(authToken && { Authorization: `Bearer ${authToken}` }),
       },
-      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      body: opts.file ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
     });
   } catch (e) {
     throw new ApiError(0, `Tidak dapat terhubung ke server (${timedOut ? 'waktu habis' : (e as Error).message})`);
@@ -104,6 +107,7 @@ export function createApiClient() {
     post: <T>(path: string, body?: unknown) => request<T>(session, 'POST', path, { body: body ?? {} }),
     put: <T>(path: string, body?: unknown) => request<T>(session, 'PUT', path, { body: body ?? {} }),
     del: <T>(path: string) => request<T>(session, 'DELETE', path),
+    upload: <T>(path: string, file: Blob) => request<T>(session, 'POST', path, { file }),
   };
 }
 

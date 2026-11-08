@@ -30,9 +30,27 @@ export interface Partner {
   active: boolean;
   trips?: number;
   liveTrips?: number;
+  /** Jumlah pesanan semua jadwal PO ini (tetap tersimpan bila mitra dihapus) */
+  bookings?: number;
 }
 
-export type PartnerInput = Omit<Partner, 'trips' | 'liveTrips' | 'logo' | 'color'> & { color?: string; logo?: string | null };
+/** logo: tidak dikirim = tetap, null = hapus, string = path hasil unggah (/media/…) */
+export type PartnerInput = Omit<Partner, 'trips' | 'liveTrips' | 'bookings' | 'logo' | 'color'> & { color?: string; logo?: string | null };
+
+/** Gambar yang sudah tersimpan: `path` disimpan di database, `url` untuk ditampilkan. */
+export interface StoredImage {
+  path: string;
+  url: string;
+}
+
+/** Foto galeri armada: unggahan (`src` = /media/…) atau bawaan data armada (`file`). */
+export interface TripPhoto {
+  src?: string;
+  file?: string;
+  cat?: string;
+  caption?: string;
+  url: string;
+}
 
 export interface TripRoute {
   from: string;
@@ -74,6 +92,8 @@ export interface TripSummary {
   cities: string[];
   minPrice: number | null;
   seats: number;
+  imageUrl: string | null;
+  photos: number;
   adminManaged: boolean;
   updatedAt: string;
 }
@@ -95,6 +115,11 @@ export interface TripDetail {
   /** Denah tetap dari data armada: varian & kursi tidak bisa diubah, harga & nama bisa */
   hasLayout: boolean;
   bookings: number;
+  /** Foto sampul tersimpan (path) & untuk pratinjau (URL) */
+  image: string | null;
+  imageUrl: string | null;
+  logoUrl: string | null;
+  photos: TripPhoto[];
   adminManaged: boolean;
   updatedAt: string;
 }
@@ -111,6 +136,9 @@ export interface TripInput {
   tiers: TripTier[];
   promos: TripPromo[];
   status?: 'draft' | 'live';
+  /** Tidak dikirim = foto tidak diubah */
+  image?: string | null;
+  photos?: Omit<TripPhoto, 'url'>[];
 }
 
 export interface PartnerStats {
@@ -151,7 +179,11 @@ export const adminApi = {
   updateTrip: (id: string, t: TripInput) => adminClient.put<TripDetail>(`/api/admin/trips/${encodeURIComponent(id)}`, t),
   setTripStatus: (id: string, status: 'draft' | 'live') =>
     adminClient.post<TripSummary>(`/api/admin/trips/${encodeURIComponent(id)}/status`, { status }),
-  deleteTrip: (id: string) => adminClient.del<void>(`/api/admin/trips/${encodeURIComponent(id)}`),
+  /** Jadwal hilang dari aplikasi penumpang & panel; pesanan yang sudah ada tetap tersimpan. */
+  deleteTrip: (id: string) => adminClient.del<{ deleted: true; bookings: number }>(`/api/admin/trips/${encodeURIComponent(id)}`),
+  deletePartner: (id: string) =>
+    adminClient.del<{ deleted: true; trips: number; bookings: number }>(`/api/admin/partners/${encodeURIComponent(id)}`),
+  uploadImage: (file: Blob) => adminClient.upload<StoredImage & { id: string; size: number }>('/api/admin/media', file),
 
   stats: (days: number) => adminClient.get<Stats>('/api/admin/stats', { days }),
 };
