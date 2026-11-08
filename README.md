@@ -72,6 +72,12 @@ Panel pemilik CardBus, terpisah dari tampilan penumpang: layout, menu, dan sesi 
 | `/admin/jadwal/baru`, `/admin/jadwal/:id` | Editor: tab Jadwal, Rute (titik naik/turun, durasi, jam khusus), Harga & Promo |
 | `/admin/po` | Mitra PO: level, admin PO, komisi, aktif/nonaktif |
 
+**Logo & foto**: form Mitra PO punya unggah logo; editor jadwal punya tab **Foto** (sampul kartu jadwal + galeri armada:
+tambah banyak sekaligus, keterangan, kategori, urutan, jadikan sampul, hapus). Gambar dikecilkan di browser
+(`lib/image.ts`, maks 1600 px, WebP) lalu dikirim ke `POST /api/admin/media`; foto baru langsung tampil di kartu
+penumpang. **Hapus** mitra / jadwal memakai dialog konfirmasi (mengetik kode PO, atau `HAPUS` untuk jadwal tayang);
+pesanan yang sudah ada tetap tersimpan.
+
 Akses dijaga **backend**: setiap endpoint `/api/admin` memeriksa `users.role = 'admin'` di database.
 Guard di web hanya untuk tampilan (mengarahkan ke `/admin/masuk`), dan `/admin` diberi `noindex`.
 Akun admin dibuat di database (lihat README backend, bagian Admin Pusat).

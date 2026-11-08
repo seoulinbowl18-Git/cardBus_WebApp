@@ -3,14 +3,17 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ConfirmDialog } from '@/components/admin/confirm-dialog';
+import { ImagePicker, PhotoGallery } from '@/components/admin/image-input';
 import { Card, ErrorBox, Field, StatusPill, btnDanger, btnPrimary, btnSecondary, inputCls } from '@/components/admin/ui';
 import { ApiError } from '@/lib/api/client';
 import {
-  DAY_ORDER, adminApi, dowName, type Partner, type TripDetail, type TripInput, type TripPromo, type TripRoute, type TripStatus, type TripTier,
+  DAY_ORDER, adminApi, dowName, type Partner, type StoredImage, type TripDetail, type TripInput, type TripPhoto, type TripPromo,
+  type TripRoute, type TripStatus, type TripTier,
 } from '@/lib/api/admin';
 import { formatDuration, formatRupiah } from '@/lib/format';
 
-type Tab = 'jadwal' | 'rute' | 'harga';
+type Tab = 'jadwal' | 'rute' | 'harga' | 'foto';
 const PAGE = 60;
 
 interface Form {
@@ -25,6 +28,11 @@ interface Form {
   tiers: TripTier[];
   promos: TripPromo[];
   status: TripStatus;
+  /** Foto sampul kartu jadwal & galeri armada */
+  image: StoredImage | null;
+  photos: TripPhoto[];
+  /** Foto hanya dikirim bila diubah di tab Foto */
+  photosChanged: boolean;
 }
 
 const NEW_FORM: Form = {
@@ -33,11 +41,15 @@ const NEW_FORM: Form = {
   tiers: [{ key: 'base', name: 'Executive', price: 0, seats: [] }],
   promos: [],
   status: 'draft',
+  image: null,
+  photos: [],
+  photosChanged: false,
 };
 
 const fromDetail = (t: TripDetail): Form => ({
   poId: t.poId, busClass: t.busClass ?? '', busType: t.busType ?? '', seatType: t.seatType ?? '', depart: t.depart, days: t.days,
   facilities: t.facilities.join(', '), routes: t.routes, tiers: t.tiers, promos: t.promos, status: t.status,
+  image: t.image && t.imageUrl ? { path: t.image, url: t.imageUrl } : null, photos: t.photos, photosChanged: false,
 });
 
 const savedText = (status: TripStatus) =>
@@ -107,6 +119,10 @@ export default function TripEditorPage() {
       routes: form.routes, tiers: form.tiers, promos: form.promos,
       // Status menunggu validasi / perlu koreksi dari aplikasi Mitra dibiarkan kecuali admin memilih Draf / Tayang.
       ...((form.status === 'draft' || form.status === 'live') && { status: form.status }),
+      ...(form.photosChanged && {
+        image: form.image?.path ?? null,
+        photos: form.photos.map(({ src, file, cat, caption }) => ({ src, file, cat: cat || undefined, caption: caption || undefined })),
+      }),
     };
     try {
       const t = isNew ? await adminApi.createTrip(body) : await adminApi.updateTrip(id, body);
@@ -127,14 +143,15 @@ export default function TripEditorPage() {
     }
   }
 
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   async function remove() {
     setBusy(true);
+    setDeleteError(null);
     try {
       await adminApi.deleteTrip(id);
-      router.replace('/admin/jadwal');
+      router.replace('/admin/jadwal?dihapus=1');
     } catch (e) {
-      setSaveError({ message: e instanceof ApiError ? e.message : 'Gagal menghapus' });
-      setConfirmDelete(false);
+      setDeleteError(e instanceof ApiError ? e.message : 'Gagal menghapus');
       setBusy(false);
     }
   }
@@ -163,7 +180,7 @@ export default function TripEditorPage() {
       </div>
 
       <div role="tablist" className="flex gap-1 border-b border-line">
-        {([['jadwal', 'Jadwal'], ['rute', `Rute (${form.routes.length})`], ['harga', 'Harga & Promo']] as const).map(([k, label]) => (
+        {([['jadwal', 'Jadwal'], ['rute', `Rute (${form.routes.length})`], ['harga', 'Harga & Promo'], ['foto', `Foto (${form.photos.length})`]] as const).map(([k, label]) => (
           <button
             key={k}
             role="tab"
@@ -179,22 +196,65 @@ export default function TripEditorPage() {
       {tab === 'jadwal' && <ScheduleTab form={form} set={set} isNew={isNew} partners={partners} />}
       {tab === 'rute' && <RoutesTab routes={form.routes} setRoutes={(f) => set('routes', f)} />}
       {tab === 'harga' && <PricesTab form={form} set={set} hasLayout={hasLayout} />}
+      {tab === 'foto' && (
+        <Card className="space-y-6">
+          <ImagePicker
+            kind="photo"
+            label="Foto sampul kartu jadwal"
+            hint="Tampil di kartu hasil pencarian penumpang."
+            value={form.image}
+            onChange={(v) => {
+              set('image', v);
+              set('photosChanged', true);
+            }}
+          />
+          <div>
+            <p className="mb-2 text-sm font-medium">Galeri armada</p>
+            <PhotoGallery
+              photos={form.photos}
+              onChange={(f) => {
+                set('photos', f);
+                set('photosChanged', true);
+              }}
+              cover={form.image}
+              onCover={(img) => {
+                set('image', img);
+                set('photosChanged', true);
+              }}
+            />
+          </div>
+          {form.photosChanged && <p className="text-xs font-semibold text-[#8a5a00]">Perubahan foto belum disimpan. Tekan Simpan.</p>}
+        </Card>
+      )}
+      {confirmDelete && trip && (
+        <ConfirmDialog
+          title="Hapus jadwal ini?"
+          confirmLabel="Hapus jadwal"
+          confirmText={trip.status === 'live' ? 'HAPUS' : undefined}
+          busy={busy}
+          error={deleteError}
+          onConfirm={remove}
+          onCancel={() => {
+            setConfirmDelete(false);
+            setDeleteError(null);
+          }}
+        >
+          <p>
+            <b className="text-ink">{trip.poName} · {trip.busClass} {trip.depart.replace(':', '.')}</b>
+            {trip.status === 'live' ? ' sedang tayang dan' : ''} langsung hilang dari aplikasi penumpang dan dari daftar jadwal.
+          </p>
+          {trip.bookings > 0 && (
+            <p>{trip.bookings} pesanan yang sudah ada tetap tersimpan: tiket penumpang tetap berlaku dan omzet tetap tercatat.</p>
+          )}
+          <p>Kalau hanya ingin menyembunyikan sementara, pilih status <b>Draf</b> saja.</p>
+        </ConfirmDialog>
+      )}
 
       <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-white/95 px-4 py-3 backdrop-blur">
         <button className={btnPrimary} onClick={save} disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan'}</button>
         {saved && <span role="status" className="text-sm font-semibold text-[#1f6a3a]">{saved}</span>}
-        {!isNew && trip && trip.bookings === 0 && (
-          <span className="ml-auto">
-            {confirmDelete ? (
-              <span className="flex items-center gap-2 text-sm">
-                Hapus permanen?
-                <button className={btnDanger} onClick={remove} disabled={busy}>Ya, hapus</button>
-                <button className={btnSecondary} onClick={() => setConfirmDelete(false)}>Batal</button>
-              </span>
-            ) : (
-              <button className={btnDanger} onClick={() => setConfirmDelete(true)}>Hapus jadwal</button>
-            )}
-          </span>
+        {!isNew && trip && (
+          <button className={`${btnDanger} ml-auto`} onClick={() => setConfirmDelete(true)}>Hapus jadwal</button>
         )}
         {saveError && (
           <div className="w-full">

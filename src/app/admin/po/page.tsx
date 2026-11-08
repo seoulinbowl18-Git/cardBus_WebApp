@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { ConfirmDialog } from '@/components/admin/confirm-dialog';
+import { ImagePicker } from '@/components/admin/image-input';
 import { Card, ErrorBox, Field, PageHead, btnPrimary, btnSecondary, inputCls } from '@/components/admin/ui';
 import { PoBadge } from '@/components/ui/po-badge';
 import { ApiError } from '@/lib/api/client';
-import { adminApi, type Partner, type PartnerInput } from '@/lib/api/admin';
+import { adminApi, type Partner, type PartnerInput, type StoredImage } from '@/lib/api/admin';
 
 const EMPTY: PartnerInput = { id: '', name: '', short: '', level: 1, adminName: '', adminPhone: '', commissionRate: 0.06, active: true };
 /** 628xx → 08xx untuk ditampilkan / diedit. */
@@ -15,7 +17,11 @@ const localPhone = (p: string | null) => (p ? p.replace(/^62/, '0') : '');
 export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<Partner[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState<{ isNew: boolean; data: PartnerInput } | null>(null);
+  const [editing, setEditing] = useState<{ isNew: boolean; data: PartnerInput; logoUrl: string | null } | null>(null);
+  const [removing, setRemoving] = useState<Partner | null>(null);
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setError(null);
@@ -26,23 +32,64 @@ export default function AdminPartnersPage() {
   }, []);
   useEffect(load, [load]);
 
+  async function remove(p: Partner) {
+    setRemoveBusy(true);
+    setRemoveError(null);
+    try {
+      const r = await adminApi.deletePartner(p.id);
+      setRemoving(null);
+      if (editing?.data.id === p.id) setEditing(null);
+      setNotice(`${p.name} dihapus. ${r.trips} jadwal ditarik dari aplikasi penumpang${r.bookings ? `; ${r.bookings} pesanan tetap tersimpan` : ''}.`);
+      load();
+    } catch (e) {
+      setRemoveError(e instanceof ApiError ? e.message : 'Gagal menghapus');
+    } finally {
+      setRemoveBusy(false);
+    }
+  }
+
   return (
     <>
       <PageHead
         title="Mitra PO"
         sub="PO nonaktif: semua jadwalnya langsung hilang dari pencarian dan tidak bisa dipesan."
         action={
-          <button className={btnPrimary} onClick={() => setEditing({ isNew: true, data: EMPTY })}>
+          <button className={btnPrimary} onClick={() => setEditing({ isNew: true, data: EMPTY, logoUrl: null })}>
             + Mitra baru
           </button>
         }
       />
       {error && <ErrorBox message={error} onRetry={load} />}
+      {notice && <p role="status" className="mb-4 rounded-lg bg-[#e5f4ea] p-3 text-sm font-semibold text-[#1f6a3a]">{notice}</p>}
+      {removing && (
+        <ConfirmDialog
+          title={`Hapus ${removing.name}?`}
+          confirmLabel="Hapus mitra"
+          confirmText={removing.id}
+          busy={removeBusy}
+          error={removeError}
+          onConfirm={() => remove(removing)}
+          onCancel={() => {
+            setRemoving(null);
+            setRemoveError(null);
+          }}
+        >
+          <p>
+            {removing.trips ? `${removing.trips} jadwal PO ini (${removing.liveTrips ?? 0} sedang tayang) langsung hilang dari aplikasi penumpang.` : 'PO ini belum punya jadwal.'}{' '}
+            Mitra tidak tampil lagi di panel dan nomor admin PO dilepas.
+          </p>
+          {removing.bookings ? (
+            <p>{removing.bookings} pesanan yang sudah ada tetap tersimpan: tiket penumpang tetap berlaku dan omzet tetap tercatat di Ringkasan.</p>
+          ) : null}
+          <p className="font-semibold text-red-700">Tindakan ini tidak bisa dibatalkan dari panel. Kode PO tidak bisa dipakai lagi.</p>
+        </ConfirmDialog>
+      )}
       {editing && (
         <PartnerForm
           key={editing.data.id || 'baru'}
           isNew={editing.isNew}
           initial={editing.data}
+          initialLogoUrl={editing.logoUrl}
           onCancel={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -77,20 +124,24 @@ export default function AdminPartnersPage() {
                     </Link>
                   </div>
                 </div>
-                <button
-                  className="text-sm font-semibold text-brand hover:underline"
-                  onClick={() =>
-                    setEditing({
-                      isNew: false,
-                      data: {
-                        id: p.id, name: p.name, short: p.short, color: p.color, level: p.level, adminName: p.adminName ?? '',
-                        adminPhone: localPhone(p.adminPhone), commissionRate: p.commissionRate, active: p.active,
-                      },
-                    })
-                  }
-                >
-                  Ubah
-                </button>
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    className="text-sm font-semibold text-brand hover:underline"
+                    onClick={() =>
+                      setEditing({
+                        isNew: false,
+                        logoUrl: p.logo,
+                        data: {
+                          id: p.id, name: p.name, short: p.short, color: p.color, level: p.level, adminName: p.adminName ?? '',
+                          adminPhone: localPhone(p.adminPhone), commissionRate: p.commissionRate, active: p.active,
+                        },
+                      })
+                    }
+                  >
+                    Ubah
+                  </button>
+                  <button className="text-sm font-semibold text-red-700 hover:underline" onClick={() => setRemoving(p)}>Hapus</button>
+                </div>
               </div>
             </Card>
           ))}
@@ -100,8 +151,17 @@ export default function AdminPartnersPage() {
   );
 }
 
-function PartnerForm({ isNew, initial, onCancel, onSaved }: { isNew: boolean; initial: PartnerInput; onCancel: () => void; onSaved: () => void }) {
+function PartnerForm({ isNew, initial, initialLogoUrl, onCancel, onSaved }: {
+  isNew: boolean;
+  initial: PartnerInput;
+  initialLogoUrl: string | null;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
   const [f, setF] = useState(initial);
+  // Logo hanya dikirim bila diganti / dihapus (path lama dari server tidak dikirim balik).
+  const [logo, setLogo] = useState<StoredImage | null>(initialLogoUrl ? { path: '', url: initialLogoUrl } : null);
+  const [logoChanged, setLogoChanged] = useState(false);
   // Komisi diedit dalam persen agar mudah dibaca (0.06 → "6")
   const [pct, setPct] = useState(String(Math.round(initial.commissionRate * 1000) / 10));
   const [busy, setBusy] = useState(false);
@@ -117,7 +177,10 @@ function PartnerForm({ isNew, initial, onCancel, onSaved }: { isNew: boolean; in
     }
     setBusy(true);
     setError(null);
-    const body = { ...f, commissionRate: rate, adminName: f.adminName || null, adminPhone: f.adminPhone || null };
+    const body: PartnerInput = {
+      ...f, commissionRate: rate, adminName: f.adminName || null, adminPhone: f.adminPhone || null,
+      ...(logoChanged && { logo: logo?.path || null }),
+    };
     try {
       if (isNew) await adminApi.createPartner(body);
       else await adminApi.updatePartner(f.id, body);
@@ -133,6 +196,16 @@ function PartnerForm({ isNew, initial, onCancel, onSaved }: { isNew: boolean; in
     <Card className="mb-4 border-brand">
       <form onSubmit={submit} className="space-y-4">
         <h2 className="text-lg font-bold">{isNew ? 'Mitra PO baru' : `Ubah ${initial.name}`}</h2>
+        <ImagePicker
+          kind="logo"
+          label="Logo PO"
+          hint="Tampil di kartu jadwal penumpang. JPG/PNG/WebP, dikecilkan otomatis."
+          value={logo}
+          onChange={(v) => {
+            setLogo(v);
+            setLogoChanged(true);
+          }}
+        />
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Kode PO" hint="Huruf kecil, mis. gm. Tidak bisa diganti.">
             <input className={inputCls} value={f.id} disabled={!isNew} required pattern="[a-z0-9\-]{2,30}" onChange={(e) => set('id', e.target.value.toLowerCase())} />
