@@ -20,4 +20,6 @@ export const config = {
 export const STORAGE_KEYS = {
   token: 'cardbus.token',
   user: 'cardbus.user',
+  /** Sesi Admin Pusat (/admin), terpisah dari sesi penumpang. */
+  adminToken: 'cardbus.admin.token',
 } as const;

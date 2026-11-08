@@ -20,17 +20,11 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
-let authToken: string | null = null;
-/** Dipanggil AuthProvider saat login / logout. */
-export const setAuthToken = (token: string | null) => {
-  authToken = token;
-};
-
-let onUnauthorized: (() => void) | null = null;
-/** Callback saat backend membalas 401 (token kedaluwarsa) agar sesi dibersihkan. */
-export const setUnauthorizedHandler = (fn: (() => void) | null) => {
-  onUnauthorized = fn;
-};
+/** Sesi satu klien: token Bearer + callback saat backend membalas 401 (token kedaluwarsa). */
+interface Session {
+  token: string | null;
+  onUnauthorized: (() => void) | null;
+}
 
 function buildUrl(path: string, query?: Query) {
   const url = new URL(`${config.apiBaseUrl}${path}`);
@@ -40,7 +34,8 @@ function buildUrl(path: string, query?: Query) {
   return url.toString();
 }
 
-async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<T> {
+async function request<T>(session: Session, method: string, path: string, opts: RequestOptions = {}): Promise<T> {
+  const authToken = session.token;
   const url = buildUrl(path, opts.query);
   // Timeout manual (AbortSignal.any belum didukung semua browser)
   const controller = new AbortController();
@@ -82,7 +77,7 @@ async function request<T>(method: string, path: string, opts: RequestOptions = {
   }
 
   if (!res.ok) {
-    if (res.status === 401 && authToken) onUnauthorized?.();
+    if (res.status === 401 && authToken) session.onUnauthorized?.();
     const msg =
       data && typeof data === 'object' && 'error' in data && typeof (data as { error: unknown }).error === 'string'
         ? (data as { error: string }).error
@@ -92,8 +87,30 @@ async function request<T>(method: string, path: string, opts: RequestOptions = {
   return data as T;
 }
 
-export const api = {
-  get: <T>(path: string, query?: Query, signal?: AbortSignal) => request<T>('GET', path, { query, signal }),
-  post: <T>(path: string, body?: unknown) => request<T>('POST', path, { body: body ?? {} }),
-  put: <T>(path: string, body?: unknown) => request<T>('PUT', path, { body: body ?? {} }),
-};
+/**
+ * Klien API dengan sesinya sendiri. Penumpang memakai `api` di bawah; Admin Pusat punya klien terpisah
+ * (lib/api/admin.ts) agar token admin tidak pernah terkirim dari halaman penumpang dan sebaliknya.
+ */
+export function createApiClient() {
+  const session: Session = { token: null, onUnauthorized: null };
+  return {
+    setToken: (token: string | null) => {
+      session.token = token;
+    },
+    setUnauthorizedHandler: (fn: (() => void) | null) => {
+      session.onUnauthorized = fn;
+    },
+    get: <T>(path: string, query?: Query, signal?: AbortSignal) => request<T>(session, 'GET', path, { query, signal }),
+    post: <T>(path: string, body?: unknown) => request<T>(session, 'POST', path, { body: body ?? {} }),
+    put: <T>(path: string, body?: unknown) => request<T>(session, 'PUT', path, { body: body ?? {} }),
+    del: <T>(path: string) => request<T>(session, 'DELETE', path),
+  };
+}
+
+const passenger = createApiClient();
+
+export const api = { get: passenger.get, post: passenger.post, put: passenger.put };
+/** Dipanggil AuthProvider saat login / logout. */
+export const setAuthToken = passenger.setToken;
+/** Callback saat backend membalas 401 (token kedaluwarsa) agar sesi dibersihkan. */
+export const setUnauthorizedHandler = passenger.setUnauthorizedHandler;
