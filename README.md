@@ -1,7 +1,7 @@
 # CardBus Web App
 
 Versi web CardBus (Next.js App Router + TypeScript + Tailwind CSS). Memakai **backend API yang sama**
-dengan aplikasi mobile Flutter (`cardbus_backend`, Express + MongoDB, di Railway).
+dengan aplikasi mobile Flutter (`cardbus_backend`, Express + PostgreSQL Supabase, di Railway).
 
 Dulu berada di folder `webapp/` repo `cardbus_app`; sejak November 2026 dipisah ke repo ini
 (riwayat commit ikut dipindahkan).
@@ -59,6 +59,26 @@ service Railway ikut terbawa saat build.
 C ke atas kanan, kode lain (mis. K1) di atas; kursi terisi tampil abu-abu.
 Data baru masuk ke database dengan menjalankan `npm run seed` di backend (upsert, aman diulang).
 
+## Admin Pusat (`/admin`)
+
+Panel pemilik CardBus, terpisah dari tampilan penumpang: layout, menu, dan sesi sendiri
+(token di `localStorage` kunci `cardbus.admin.token`, klien API terpisah di `lib/api/admin.ts`).
+
+| Halaman | Isi |
+| --- | --- |
+| `/admin/masuk` | Login OTP WhatsApp khusus admin (`verify-otp` dengan `scope: "admin"`) |
+| `/admin` | Ringkasan: omzet, tiket, komisi CardBus, diskon voucher, omzet harian, per PO |
+| `/admin/jadwal` | Semua jadwal + filter PO/status, tayangkan / sembunyikan |
+| `/admin/jadwal/baru`, `/admin/jadwal/:id` | Editor: tab Jadwal, Rute (titik naik/turun, durasi, jam khusus), Harga & Promo |
+| `/admin/po` | Mitra PO: level, admin PO, komisi, aktif/nonaktif |
+
+Akses dijaga **backend**: setiap endpoint `/api/admin` memeriksa `users.role = 'admin'` di database.
+Guard di web hanya untuk tampilan (mengarahkan ke `/admin/masuk`), dan `/admin` diberi `noindex`.
+Akun admin dibuat di database (lihat README backend, bagian Admin Pusat).
+
+Jadwal berstatus **Tayang** langsung muncul di pencarian penumpang (`GET /api/trips` membaca tabel yang sama);
+**Draf** dan jadwal milik PO nonaktif tidak tampil.
+
 ## Struktur
 
 ```
@@ -68,8 +88,10 @@ cardBus_WebApp/
 ├── Dockerfile              # image produksi (Railway / Docker)
 └── src/
     ├── app/                # App Router
-    │   ├── layout.tsx      # font Plus Jakarta Sans, header, AuthProvider
-    │   ├── page.tsx        # beranda: form cari jadwal
+    │   ├── layout.tsx      # html/body + font Plus Jakarta Sans
+    │   ├── (public)/       # tampilan penumpang (URL tanpa awalan): layout = header, menu bawah, AuthProvider
+    │   ├── admin/          # Admin Pusat: masuk, ringkasan, jadwal/[id], po (layout & sesi sendiri)
+    │   ├── (public)/page.tsx # beranda: form cari jadwal
     │   ├── cari/           # hasil pencarian (Server Component, GET /api/trips)
     │   ├── checkout/       # pilih varian & kursi, penumpang, kontak, metode bayar
     │   ├── masuk/          # login OTP WhatsApp
