@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { ApiError } from '@/lib/api/client';
 import { adminApi, type StoredImage, type TripPhoto } from '@/lib/api/admin';
 import { ImageError, compressImage } from '@/lib/image';
+import { PoBadge } from '@/components/ui/po-badge';
 import { btnSecondary, inputCls } from './ui';
 
 /** Kecilkan lalu unggah satu file; melempar Error dengan pesan untuk admin. */
@@ -31,6 +32,8 @@ export function ImagePicker({
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Rasio lebar:tinggi gambar yang sedang tampil (untuk peringatan logo yang terlalu melebar)
+  const [ratio, setRatio] = useState<number | null>(null);
 
   async function pick(file: File | undefined) {
     if (!file) return;
@@ -53,7 +56,12 @@ export function ImagePicker({
       <div className="flex flex-wrap items-center gap-3">
         <div className={`grid shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-slate-50 ${box}`}>
           {value ? (
-            <img src={value.url} alt={label} className={kind === 'logo' ? 'max-h-full max-w-full object-contain' : 'h-full w-full object-cover'} />
+            <img
+              src={value.url}
+              alt={label}
+              onLoad={(e) => setRatio(e.currentTarget.naturalWidth / Math.max(1, e.currentTarget.naturalHeight))}
+              className={kind === 'logo' ? 'max-h-full max-w-full object-contain' : 'h-full w-full object-cover'}
+            />
           ) : (
             <span className="text-xs text-faint">{busy ? 'Mengunggah…' : 'Belum ada'}</span>
           )}
@@ -68,8 +76,19 @@ export function ImagePicker({
             )}
           </div>
           {hint && <span className="text-xs text-faint">{hint}</span>}
+          {kind === 'logo' && value && (
+            <span className="flex items-center gap-2 text-xs text-faint">
+              Di kartu jadwal: <PoBadge name="PO" logo={value.url} />
+            </span>
+          )}
         </div>
       </div>
+      {kind === 'logo' && value && ratio !== null && ratio > 2.5 && (
+        <p className="mt-2 rounded-lg bg-[#fff4d6] p-2 text-xs text-[#8a5a00]">
+          Logo ini sangat melebar ({Math.round(ratio * 10) / 10}:1), jadi tampil kecil di kartu jadwal. Bila ada, pakai versi logo
+          yang lebih persegi (ikon / lambang PO) agar lebih jelas, terutama di aplikasi HP.
+        </p>
+      )}
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" aria-label={label} onChange={(e) => pick(e.target.files?.[0])} />
       {error && <p role="alert" className="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">{error}</p>}
     </div>
