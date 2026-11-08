@@ -19,7 +19,7 @@ export function TripCard({ trip }: { trip: Trip }) {
         <div className="flex items-center gap-2.5">
           <PoBadge name={trip.poName} logo={trip.logo} />
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-[15px] font-extrabold">PO {trip.poName}</h3>
+            <h3 className="line-clamp-2 break-words text-[15px] font-extrabold leading-tight">PO {trip.poName}</h3>
             <p className="truncate text-xs text-muted">{trip.busClass}</p>
           </div>
           {tier && (
