@@ -256,6 +256,37 @@ export interface FeaturedInput {
   active: boolean;
 }
 
+/** Banner "Promo & Info" (top) / "Promo spesial" (special) di beranda web & aplikasi (tabel banners). */
+export interface AdminBanner {
+  id: string;
+  placement: 'top' | 'special';
+  tag: string;
+  title: string;
+  subtitle: string;
+  /** Gambar tersimpan (path) & untuk pratinjau (URL) */
+  image: string | null;
+  imageUrl: string | null;
+  ctaLabel: string;
+  /** '/cari?from=…&to=…', 'https://…', atau null (info saja) */
+  link: string | null;
+  from: string | null;
+  to: string | null;
+  active: boolean;
+  sortOrder: number;
+}
+
+/** image: tidak dikirim = gambar tetap, null = tanpa gambar, string = path hasil unggah */
+export interface BannerInput {
+  placement: 'top' | 'special';
+  tag: string;
+  title: string;
+  subtitle: string | null;
+  image?: string | null;
+  ctaLabel: string;
+  link: string | null;
+  active: boolean;
+}
+
 export const adminApi = {
   sendOtp: (phone: string) => adminClient.post<SendOtpResponse>('/api/auth/send-otp', { phone }),
   /** scope 'admin': backend menolak nomor yang bukan admin dan tidak membuat akun baru. */
@@ -281,6 +312,11 @@ export const adminApi = {
   updateFeatured: (id: string, f: FeaturedInput) => adminClient.put<FeaturedCard>(`/api/admin/featured/${encodeURIComponent(id)}`, f),
   orderFeatured: (ids: string[]) => adminClient.post<FeaturedCard[]>('/api/admin/featured/order', { ids }),
   deleteFeatured: (id: string) => adminClient.del<{ deleted: true }>(`/api/admin/featured/${encodeURIComponent(id)}`),
+  banners: () => adminClient.get<AdminBanner[]>('/api/admin/banners'),
+  createBanner: (b: BannerInput) => adminClient.post<AdminBanner>('/api/admin/banners', b),
+  updateBanner: (id: string, b: BannerInput) => adminClient.put<AdminBanner>(`/api/admin/banners/${encodeURIComponent(id)}`, b),
+  orderBanners: (ids: string[]) => adminClient.post<AdminBanner[]>('/api/admin/banners/order', { ids }),
+  deleteBanner: (id: string) => adminClient.del<{ deleted: true }>(`/api/admin/banners/${encodeURIComponent(id)}`),
   uploadImage: (file: Blob) => adminClient.upload<StoredImage & { id: string; size: number }>('/api/admin/media', file),
 
   stats: (days: number) => adminClient.get<Stats>('/api/admin/stats', { days }),

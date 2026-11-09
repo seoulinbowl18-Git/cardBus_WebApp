@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import type { FeaturedProduct, Promo } from '@/lib/home-content';
@@ -51,14 +50,17 @@ function Tag({ children, tone = 'gold' }: { children: React.ReactNode; tone?: 'g
 }
 
 /** Banner promo: foto + gradasi teal gelap + teks + tombol emas (PromoBannerCard mobile). */
-function PromoBanner({ promo, onSoon, tall }: { promo: Promo; onSoon: (m: string) => void; tall?: boolean }) {
-  const soon = promo.soonMessage || !promo.from || !promo.to;
+export function PromoBanner({ promo, onSoon, tall, preview }: { promo: Promo; onSoon: (m: string) => void; tall?: boolean; preview?: boolean }) {
+  const route = promo.from && promo.to && !promo.soonMessage;
   const cta = (
     <span className="mt-2 inline-flex rounded-full bg-gold px-3 py-1.5 text-xs font-extrabold text-ink">{promo.ctaLabel} →</span>
   );
   const body = (
     <>
-      <Image src={promo.image} alt="" fill sizes="(min-width: 1024px) 33vw, 85vw" className="object-cover transition duration-500 group-hover:scale-105" />
+      {promo.image && (
+        // eslint-disable-next-line @next/next/no-img-element -- gambar dari backend (host berbeda per environment)
+        <img src={promo.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+      )}
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,46,49,0.94)_0%,rgba(4,46,49,0.7)_50%,rgba(4,46,49,0)_85%)]" />
       <div className="relative flex h-full w-2/3 flex-col justify-center p-4">
         <span><Tag>{promo.tag}</Tag></span>
@@ -68,11 +70,14 @@ function PromoBanner({ promo, onSoon, tall }: { promo: Promo; onSoon: (m: string
       </div>
     </>
   );
-  const cls = `group relative block overflow-hidden rounded-[18px] bg-[#dce4e4] text-left ${tall ? 'h-[188px]' : 'h-[150px]'}`;
-  return soon ? (
-    <button type="button" onClick={() => onSoon(promo.soonMessage ?? promo.title)} className={`${cls} w-full`}>{body}</button>
-  ) : (
-    <Link href={routeHref(promo.from!, promo.to!)} className={cls}>{body}</Link>
+  const cls = `group relative block overflow-hidden rounded-[18px] bg-[#0f857d] text-left ${tall ? 'h-[188px]' : 'h-[150px]'}`;
+  if (preview) return <div className={cls}>{body}</div>;
+  if (route) return <Link href={routeHref(promo.from!, promo.to!)} className={cls}>{body}</Link>;
+  if (promo.link) {
+    return <a href={promo.link} target="_blank" rel="noopener noreferrer" className={cls}>{body}</a>;
+  }
+  return (
+    <button type="button" onClick={() => onSoon(promo.soonMessage ?? (promo.subtitle || promo.title))} className={`${cls} w-full`}>{body}</button>
   );
 }
 
@@ -91,7 +96,7 @@ export function PromoRow({ promos, tall, stacked }: { promos: Promo[]; tall?: bo
     return (
       <>
         <div className="grid gap-3 md:grid-cols-2">
-          {promos.map((p) => <PromoBanner key={p.title} promo={p} tall={tall} onSoon={toast.show} />)}
+          {promos.map((p) => <PromoBanner key={p.id ?? p.title} promo={p} tall={tall} onSoon={toast.show} />)}
         </div>
         {toast.node}
       </>
@@ -105,7 +110,7 @@ export function PromoRow({ promos, tall, stacked }: { promos: Promo[]; tall?: bo
         className={`-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:grid lg:overflow-visible lg:px-0 ${promos.length >= 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}
       >
         {promos.map((p) => (
-          <div key={p.title} className="w-[85%] shrink-0 snap-start sm:w-[60%] lg:w-auto">
+          <div key={p.id ?? p.title} className="w-[85%] shrink-0 snap-start sm:w-[60%] lg:w-auto">
             <PromoBanner promo={p} tall={tall} onSoon={toast.show} />
           </div>
         ))}
@@ -113,7 +118,7 @@ export function PromoRow({ promos, tall, stacked }: { promos: Promo[]; tall?: bo
       {promos.length > 1 && (
         <div className="mt-2 flex justify-center gap-1.5 lg:hidden" aria-hidden>
           {promos.map((p, i) => (
-            <span key={p.title} className={`h-2 rounded-full transition-all ${i === index ? 'w-[22px] bg-brand' : 'w-2 bg-line'}`} />
+            <span key={p.id ?? p.title} className={`h-2 rounded-full transition-all ${i === index ? 'w-[22px] bg-brand' : 'w-2 bg-line'}`} />
           ))}
         </div>
       )}

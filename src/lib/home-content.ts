@@ -6,14 +6,20 @@
 
 const img = (f: string) => `/images/home/${f}`;
 
+/** Banner "Promo & Info" / "Promo spesial": dari GET /api/banners (dikelola Admin Pusat), cadangan di bawah. */
 export interface Promo {
-  image: string;
+  id?: string;
+  /** URL gambar; kosong = latar polos */
+  image?: string | null;
   tag: string;
   title: string;
   subtitle: string;
   ctaLabel: string;
-  from?: string;
-  to?: string;
+  /** Diisi keduanya = tombol membuka pencarian rute */
+  from?: string | null;
+  to?: string | null;
+  /** Tautan luar (https://…) */
+  link?: string | null;
   /** Diisi = belum bisa dipesan; tombol menampilkan info ini. */
   soonMessage?: string;
 }
@@ -37,7 +43,7 @@ export interface FeaturedProduct {
 /** Rute awal kartu cari (default TicketSearchModel di mobile). */
 export const DEFAULT_ROUTE = { from: 'Solo', to: 'Jakarta' };
 
-/** "Promo & Info" (MockData.topPromos). */
+/** "Promo & Info" cadangan, dipakai hanya bila backend tidak bisa dihubungi (isi asli: Admin Pusat → Promo & Info). */
 export const TOP_PROMOS: Promo[] = [
   {
     image: img('garudamas_dd2.jpg'), tag: 'RUTE BARU · GARUDA MAS', title: 'Poris ↔ Malang Double Decker Sleeper',
@@ -53,10 +59,7 @@ export const TOP_PROMOS: Promo[] = [
   },
 ];
 
-/**
- * "Promo spesial" (MockData.midPromos). Banner "Hemat [X%] kelas Super Top" di mobile
- * masih berisi placeholder, jadi sengaja belum ditampilkan di web.
- */
+/** "Promo spesial" cadangan, dipakai hanya bila backend tidak bisa dihubungi. */
 export const SPECIAL_PROMOS: Promo[] = [
   {
     image: img('san_jetbus5.jpg'), tag: 'SEGERA HADIR', title: 'Solo → Sumatera bareng PO SAN',
