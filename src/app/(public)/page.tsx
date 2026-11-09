@@ -1,13 +1,18 @@
 import Link from 'next/link';
 import { FeaturedGrid, FeatureStrip, Greeting, PromoRow, SectionTitle } from '@/components/home/home-sections';
 import { SearchCard } from '@/components/home/search-card';
-import { FEATURED, SPECIAL_PROMOS, TOP_PROMOS } from '@/lib/home-content';
+import { loadFeatured } from '@/lib/featured';
+import { SPECIAL_PROMOS, TOP_PROMOS } from '@/lib/home-content';
+
+// Produk unggulan dikelola di Admin Pusat: beranda diperbarui paling lama tiap 30 detik.
+export const revalidate = 30;
 
 /**
  * Beranda, mengikuti HomeScreen di aplikasi mobile: header teal melengkung + sapaan,
  * kartu cari, Promo & Info, Produk unggulan, Promo spesial, dan keunggulan CardBus.
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const featured = await loadFeatured();
   return (
     <div className="space-y-8">
       {/* Hero selebar layar: sapaan + bilah cari horizontal */}
@@ -44,10 +49,12 @@ export default function HomePage() {
         <PromoRow promos={TOP_PROMOS} tall />
       </section>
 
-      <section>
-        <SectionTitle title="Produk unggulan" subtitle="Rute favorit dari PO mitra CardBus" trailing={`${FEATURED.length} rute`} />
-        <FeaturedGrid products={FEATURED} />
-      </section>
+      {featured.length > 0 && (
+        <section>
+          <SectionTitle title="Produk unggulan" subtitle="Rute favorit dari PO mitra CardBus" trailing={`${featured.length} rute`} />
+          <FeaturedGrid products={featured} />
+        </section>
+      )}
 
       <section>
         <SectionTitle title="Promo spesial" trailing={`${SPECIAL_PROMOS.length} promo`} />

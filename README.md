@@ -71,6 +71,7 @@ Panel pemilik CardBus, terpisah dari tampilan penumpang: layout, menu, dan sesi 
 | `/admin/jadwal` | Semua jadwal + filter PO/status, tayangkan / sembunyikan |
 | `/admin/jadwal/baru`, `/admin/jadwal/:id` | Editor: tab Jadwal, Rute (titik naik/turun, durasi, jam khusus), Harga & Promo |
 | `/admin/po` | Mitra PO: level, admin PO, komisi, aktif/nonaktif |
+| `/admin/unggulan` | Produk Unggulan: kartu rute favorit di beranda (foto WebP, PO, rute, titik naik, harga & harga coret, label badge, segera hadir, aktif, urutan, hapus) |
 
 **Logo & foto**: form Mitra PO punya unggah logo; editor jadwal punya tab **Foto** (sampul kartu jadwal + galeri armada:
 tambah banyak sekaligus, keterangan, kategori, urutan, jadikan sampul, hapus). Gambar dikecilkan di browser
@@ -81,6 +82,10 @@ pesanan yang sudah ada tetap tersimpan.
 Akses dijaga **backend**: setiap endpoint `/api/admin` memeriksa `users.role = 'admin'` di database.
 Guard di web hanya untuk tampilan (mengarahkan ke `/admin/masuk`), dan `/admin` diberi `noindex`.
 Akun admin dibuat di database (lihat README backend, bagian Admin Pusat).
+
+**Produk unggulan** di beranda dibaca dari `GET /api/featured` di server (`lib/featured.ts`); beranda diperbarui paling
+lama tiap 30 detik. Bila backend tidak bisa dihubungi, beranda memakai daftar cadangan `FEATURED` di
+`lib/home-content.ts`; bila admin menonaktifkan semua kartu, bagian itu disembunyikan.
 
 Jadwal berstatus **Tayang** langsung muncul di pencarian penumpang (`GET /api/trips` membaca tabel yang sama);
 **Draf** dan jadwal milik PO nonaktif tidak tampil.

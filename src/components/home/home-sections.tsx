@@ -122,10 +122,13 @@ export function PromoRow({ promos, tall, stacked }: { promos: Promo[]; tall?: bo
   );
 }
 
-const TAG_TONE: Record<string, 'gold' | 'red' | 'teal'> = { PROMO: 'red', TERLARIS: 'gold', BARU: 'teal' };
+const TAG_TONE: Record<string, 'gold' | 'red' | 'teal'> = { PROMO: 'red', DISKON: 'red', TERLARIS: 'gold', BARU: 'teal' };
 
-/** Kartu "Produk unggulan" (PromoCardWidget mobile). */
-export function FeaturedGrid({ products }: { products: FeaturedProduct[] }) {
+/**
+ * Kartu "Produk unggulan" (PromoCardWidget mobile). Foto & logo bisa dari backend (host lain), jadi memakai
+ * <img> biasa. Dipakai juga sebagai pratinjau di Admin Pusat (`preview`: tanpa tautan).
+ */
+export function FeaturedGrid({ products, preview }: { products: FeaturedProduct[]; preview?: boolean }) {
   const toast = useToast();
   return (
     <>
@@ -133,14 +136,20 @@ export function FeaturedGrid({ products }: { products: FeaturedProduct[] }) {
         {products.map((p) => {
           const card = (
             <>
-              <div className="relative aspect-[4/3] bg-[#dce4e4]">
-                <Image src={p.image} alt={`Bus ${p.poName} ${p.busClass}`} fill sizes="(min-width: 768px) 33vw, 50vw" className="object-cover transition duration-500 group-hover:scale-105" />
+              <div className="relative aspect-[4/3] overflow-hidden bg-[#dce4e4]">
+                {p.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- foto dari backend (host berbeda per environment)
+                  <img src={p.image} alt={`Bus ${p.poName} ${p.busClass}`} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                ) : (
+                  <span className="absolute inset-0 grid place-items-center text-2xl font-extrabold text-brand/40">{p.poName.slice(0, 2).toUpperCase()}</span>
+                )}
                 <span className="absolute left-2 top-2"><Tag tone={TAG_TONE[p.tag] ?? 'gold'}>{p.tag}</Tag></span>
               </div>
               <div className="flex flex-1 flex-col p-3">
                 <div className="flex items-center gap-1.5">
                   {p.logo ? (
-                    <Image src={p.logo} alt="" width={20} height={20} className="h-5 w-5 rounded object-contain" />
+                    // eslint-disable-next-line @next/next/no-img-element -- logo dari backend; lebar mengikuti bentuk logo
+                    <img src={p.logo} alt="" loading="lazy" className="h-5 w-auto min-w-5 max-w-[60px] rounded object-contain" />
                   ) : (
                     <span className="grid h-5 w-5 place-items-center rounded bg-brand text-[8px] font-extrabold text-white">{p.poName.slice(0, 2).toUpperCase()}</span>
                   )}
@@ -148,7 +157,7 @@ export function FeaturedGrid({ products }: { products: FeaturedProduct[] }) {
                 </div>
                 <p className="truncate text-xs text-muted">{p.busClass}</p>
                 <p className="mt-2 text-sm font-bold leading-snug">{p.from} → {p.to}</p>
-                <p className="truncate text-[11px] text-faint">Naik di {p.boardPoint}</p>
+                {p.boardPoint && <p className="truncate text-[11px] text-faint">Naik di {p.boardPoint}</p>}
                 <div className="mt-auto pt-3">
                   {p.comingSoon || !p.price ? (
                     <span className="text-xs font-extrabold text-brand">Segera hadir</span>
@@ -164,6 +173,7 @@ export function FeaturedGrid({ products }: { products: FeaturedProduct[] }) {
             </>
           );
           const cls = 'group flex flex-col overflow-hidden rounded-2xl border border-line bg-white text-left transition hover:-translate-y-0.5 hover:shadow-md';
+          if (preview) return <div key={p.id} className={cls}>{card}</div>;
           return p.comingSoon ? (
             <button key={p.id} type="button" className={cls} onClick={() => toast.show(`PO ${p.poName} ${p.from} → ${p.to}: jadwal segera hadir di CardBus`)}>
               {card}
