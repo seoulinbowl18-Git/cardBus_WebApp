@@ -5,15 +5,16 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
 import { ImagePicker, PhotoGallery } from '@/components/admin/image-input';
+import { StopsEditor } from '@/components/admin/stops-editor';
 import { Card, ErrorBox, Field, StatusPill, btnDanger, btnPrimary, btnSecondary, inputCls } from '@/components/admin/ui';
 import { ApiError } from '@/lib/api/client';
 import {
-  DAY_ORDER, adminApi, dowName, type Partner, type StoredImage, type TripDetail, type TripInput, type TripPhoto, type TripPromo,
-  type TripRoute, type TripStatus, type TripTier,
+  DAY_ORDER, adminApi, dowName, stopsProblem, type Partner, type StoredImage, type TripDetail, type TripInput, type TripPhoto, type TripPromo,
+  type TripRoute, type TripStatus, type TripStop, type TripTier,
 } from '@/lib/api/admin';
 import { formatDuration, formatRupiah } from '@/lib/format';
 
-type Tab = 'jadwal' | 'rute' | 'harga' | 'foto';
+type Tab = 'jadwal' | 'rute' | 'perhentian' | 'harga' | 'foto';
 const PAGE = 60;
 
 interface Form {
@@ -33,6 +34,9 @@ interface Form {
   photos: TripPhoto[];
   /** Foto hanya dikirim bila diubah di tab Foto */
   photosChanged: boolean;
+  stops: TripStop[];
+  /** Perhentian hanya dikirim bila diubah di tab Perhentian */
+  stopsChanged: boolean;
 }
 
 const NEW_FORM: Form = {
@@ -44,12 +48,15 @@ const NEW_FORM: Form = {
   image: null,
   photos: [],
   photosChanged: false,
+  stops: [],
+  stopsChanged: false,
 };
 
 const fromDetail = (t: TripDetail): Form => ({
   poId: t.poId, busClass: t.busClass ?? '', busType: t.busType ?? '', seatType: t.seatType ?? '', depart: t.depart, days: t.days,
   facilities: t.facilities.join(', '), routes: t.routes, tiers: t.tiers, promos: t.promos, status: t.status,
   image: t.image && t.imageUrl ? { path: t.image, url: t.imageUrl } : null, photos: t.photos, photosChanged: false,
+  stops: t.stops ?? [], stopsChanged: false,
 });
 
 const savedText = (status: TripStatus) =>
@@ -109,6 +116,12 @@ export default function TripEditorPage() {
 
   async function save() {
     if (!form) return;
+    const stopError = form.stopsChanged ? stopsProblem(form.stops) : null;
+    if (stopError) {
+      setTab('perhentian');
+      setSaveError({ message: stopError });
+      return;
+    }
     setBusy(true);
     setSaveError(null);
     setSaved(null);
@@ -116,7 +129,10 @@ export default function TripEditorPage() {
       ...(isNew && { poId: form.poId }),
       busClass: form.busClass, busType: form.busType || null, seatType: form.seatType || null, depart: form.depart, days: form.days,
       facilities: form.facilities.split(',').map((s) => s.trim()).filter(Boolean),
-      routes: form.routes, tiers: form.tiers, promos: form.promos,
+      // Baris rute kosong (mis. jadwal baru yang rutenya dari perhentian) tidak dikirim
+      routes: form.routes.filter((r) => r.from.trim() || r.to.trim() || r.viaStops),
+      tiers: form.tiers, promos: form.promos,
+      ...(form.stopsChanged && { stops: form.stops }),
       // Status menunggu validasi / perlu koreksi dari aplikasi Mitra dibiarkan kecuali admin memilih Draf / Tayang.
       ...((form.status === 'draft' || form.status === 'live') && { status: form.status }),
       ...(form.photosChanged && {
@@ -180,7 +196,7 @@ export default function TripEditorPage() {
       </div>
 
       <div role="tablist" className="flex gap-1 border-b border-line">
-        {([['jadwal', 'Jadwal'], ['rute', `Rute (${form.routes.length})`], ['harga', 'Harga & Promo'], ['foto', `Foto (${form.photos.length})`]] as const).map(([k, label]) => (
+        {([['jadwal', 'Jadwal'], ['rute', `Rute (${form.routes.length})`], ['perhentian', `Perhentian (${form.stops.length})`], ['harga', 'Harga & Promo'], ['foto', `Foto (${form.photos.length})`]] as const).map(([k, label]) => (
           <button
             key={k}
             role="tab"
@@ -194,7 +210,20 @@ export default function TripEditorPage() {
       </div>
 
       {tab === 'jadwal' && <ScheduleTab form={form} set={set} isNew={isNew} partners={partners} />}
-      {tab === 'rute' && <RoutesTab routes={form.routes} setRoutes={(f) => set('routes', f)} />}
+      {tab === 'rute' && <RoutesTab routes={form.routes} setRoutes={(f) => set('routes', f)} stopsChanged={form.stopsChanged} />}
+      {tab === 'perhentian' && (
+        <>
+          <StopsEditor
+            stops={form.stops}
+            depart={form.depart}
+            onChange={(f) => {
+              set('stops', f);
+              set('stopsChanged', true);
+            }}
+          />
+          {form.stopsChanged && <p className="text-xs font-semibold text-[#8a5a00]">Perubahan perhentian belum disimpan. Tekan Simpan; rute ikut diperbarui.</p>}
+        </>
+      )}
       {tab === 'harga' && <PricesTab form={form} set={set} hasLayout={hasLayout} />}
       {tab === 'foto' && (
         <Card className="space-y-6">
@@ -369,7 +398,7 @@ function useRouteFilter(routes: TripRoute[]) {
   return { shown: matches.slice(0, limit), total: matches.length, search, more, clear: () => setQ('') };
 }
 
-function RoutesTab({ routes, setRoutes }: { routes: TripRoute[]; setRoutes: (f: (old: TripRoute[]) => TripRoute[]) => void }) {
+function RoutesTab({ routes, setRoutes, stopsChanged }: { routes: TripRoute[]; setRoutes: (f: (old: TripRoute[]) => TripRoute[]) => void; stopsChanged: boolean }) {
   const { shown, total, search, more, clear } = useRouteFilter(routes);
   const edit = (i: number, patch: Partial<TripRoute>) => setRoutes((old) => old.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const remove = (i: number) => setRoutes((old) => old.filter((_, j) => j !== i));
@@ -381,7 +410,15 @@ function RoutesTab({ routes, setRoutes }: { routes: TripRoute[]; setRoutes: (f: 
   return (
     <Card>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted">Setiap pasangan kota yang bisa dipesan penumpang, dengan titik naik/turun dan lama perjalanan.</p>
+        <div className="text-sm text-muted">
+          <p>Setiap pasangan kota yang bisa dipesan penumpang, dengan titik naik/turun dan lama perjalanan.</p>
+          {routes.some((r) => r.viaStops) && (
+            <p className="mt-1 text-xs">
+              Rute bertanda <b className="text-brand">Perhentian</b> dibuat dari tab Perhentian; ubah di sana.
+              {stopsChanged && ' Rute ini diperbarui setelah Simpan.'}
+            </p>
+          )}
+        </div>
         <div className="flex gap-2">
           {search}
           <button className={btnSecondary} onClick={() => add({ from: '', to: '', boardPoint: '', dropPoint: '', minutes: 480 })}>+ Rute</button>
@@ -404,45 +441,58 @@ function RoutesTab({ routes, setRoutes }: { routes: TripRoute[]; setRoutes: (f: 
               </tr>
             </thead>
             <tbody>
-              {shown.map(({ r, i }) => (
-                <tr key={i} className="border-t border-line">
-                  <Cell><input className={inputCls} value={r.from} onChange={(e) => edit(i, { from: e.target.value })} aria-label="Kota asal" /></Cell>
-                  <Cell><input className={inputCls} value={r.boardPoint} onChange={(e) => edit(i, { boardPoint: e.target.value })} aria-label="Titik naik" /></Cell>
-                  <Cell><input className={inputCls} value={r.to} onChange={(e) => edit(i, { to: e.target.value })} aria-label="Kota tujuan" /></Cell>
-                  <Cell><input className={inputCls} value={r.dropPoint} onChange={(e) => edit(i, { dropPoint: e.target.value })} aria-label="Titik turun" /></Cell>
+              {shown.map(({ r, i }) => {
+                const fixed = Boolean(r.viaStops);
+                return (
+                <tr key={i} className={`border-t border-line ${fixed ? 'bg-teal-soft/40' : ''}`}>
+                  <Cell>
+                    <input className={inputCls} value={r.from} disabled={fixed} onChange={(e) => edit(i, { from: e.target.value })} aria-label="Kota asal" />
+                    {fixed && <span className="mt-0.5 block text-[11px] font-bold text-brand">Perhentian</span>}
+                  </Cell>
+                  <Cell><input className={inputCls} value={r.boardPoint} disabled={fixed} onChange={(e) => edit(i, { boardPoint: e.target.value })} aria-label="Titik naik" /></Cell>
+                  <Cell><input className={inputCls} value={r.to} disabled={fixed} onChange={(e) => edit(i, { to: e.target.value })} aria-label="Kota tujuan" /></Cell>
+                  <Cell><input className={inputCls} value={r.dropPoint} disabled={fixed} onChange={(e) => edit(i, { dropPoint: e.target.value })} aria-label="Titik turun" /></Cell>
                   <Cell>
                     <input
                       className={`${inputCls} w-24`}
                       inputMode="numeric"
                       value={r.minutes || ''}
+                      disabled={fixed}
                       onChange={(e) => edit(i, { minutes: Number(e.target.value.replace(/\D/g, '')) })}
                       aria-label="Durasi menit"
                     />
                     <span className="mt-0.5 block text-[11px] text-faint">{r.minutes ? formatDuration(r.minutes) : ''}</span>
                   </Cell>
                   <Cell>
-                    <input
-                      type="time"
-                      className={`${inputCls} w-28`}
-                      value={r.depart ?? ''}
-                      onChange={(e) => edit(i, { depart: e.target.value || undefined })}
-                      aria-label="Jam berangkat khusus"
-                    />
+                    {fixed ? (
+                      <span className="block pt-2 text-xs text-faint">dari perhentian</span>
+                    ) : (
+                      <input
+                        type="time"
+                        className={`${inputCls} w-28`}
+                        value={r.depart ?? ''}
+                        onChange={(e) => edit(i, { depart: e.target.value || undefined })}
+                        aria-label="Jam berangkat khusus"
+                      />
+                    )}
                   </Cell>
                   <Cell>
-                    <span className="flex gap-2 whitespace-nowrap">
-                      <button
-                        className="text-xs font-semibold text-brand"
-                        title="Tambah rute arah sebaliknya"
-                        onClick={() => add({ from: r.to, to: r.from, boardPoint: r.dropPoint, dropPoint: r.boardPoint, minutes: r.minutes })}
-                      >
-                        ⇄ Balik
-                      </button>
-                      <button className="text-xs font-semibold text-red-700" onClick={() => remove(i)} aria-label={`Hapus rute ${routeLabel(r)}`}>Hapus</button>
-                    </span>
+                    {!fixed && (
+                      <span className="flex gap-2 whitespace-nowrap">
+                        <button
+                          className="text-xs font-semibold text-brand"
+                          title="Tambah rute arah sebaliknya"
+                          onClick={() => add({ from: r.to, to: r.from, boardPoint: r.dropPoint, dropPoint: r.boardPoint, minutes: r.minutes })}
+                        >
+                          ⇄ Balik
+                        </button>
+                        <button className="text-xs font-semibold text-red-700" onClick={() => remove(i)} aria-label={`Hapus rute ${routeLabel(r)}`}>Hapus</button>
+                      </span>
+                    )}
                   </Cell>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
