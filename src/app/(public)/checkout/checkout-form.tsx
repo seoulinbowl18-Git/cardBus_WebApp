@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { BusPhoto } from '@/components/bus-photo';
 import { FacilityChips } from '@/components/facility-chips';
+import { TripStops } from '@/components/trip-stops';
 import { SeatLayoutMap } from '@/components/seat-layout-map';
 import { SeatPicker } from '@/components/seat-picker';
 import { VoucherPicker } from '@/components/voucher-picker';
@@ -266,6 +267,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
               </div>
             </div>
             <FacilityChips codes={trip.facilities} />
+            <TripStops trip={trip} />
           </div>
         </div>
 

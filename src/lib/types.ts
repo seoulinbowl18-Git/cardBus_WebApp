@@ -63,13 +63,22 @@ export interface Trip {
   /** URL foto & logo bus (null jika PO belum punya). Opsional: backend versi lama belum mengirim. */
   image?: string | null;
   logo?: string | null;
-  /** Kode fasilitas: ac, toilet, selimut, usb, legrest, makan, tv, kompartemen. */
-  /** Kode, teks bebas, atau string berformat koma (dibaca parseFacilities) */
+  /** Fasilitas: kode (ac, toilet, …), teks bebas, atau string berformat koma (dibaca parseFacilities) */
   facilities?: string[] | string;
+  /** Urutan perhentian (diatur di Admin Pusat). Kosong = rute ini tanpa daftar perhentian. */
+  stops?: TripStopPoint[];
   /** Mis. "2-2", "2-1 · 21 kursi", "Exe Plus + Sleeper". */
   seatType?: string | null;
   /** Denah per lantai (format prototipe CardBus). Kosong di backend versi lama. */
   layout?: SeatDeck[];
+}
+
+/** Satu perhentian; minutes = menit sejak perhentian pertama. */
+export interface TripStopPoint {
+  city: string;
+  point: string;
+  minutes: number;
+  type: 'board' | 'rest' | 'drop' | string;
 }
 
 /** Satu sel denah: kursi / sleeper, lorong, atau judul bagian (satu baris sendiri). */

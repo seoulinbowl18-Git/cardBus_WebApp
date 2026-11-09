@@ -66,6 +66,56 @@ export interface TripRoute {
   viaStops?: boolean;
 }
 
+/** Perhentian jadwal; minutes = menit sejak jam berangkat jadwal. */
+export interface TripStop {
+  city: string;
+  point: string;
+  minutes: number;
+  type: 'board' | 'rest' | 'drop';
+}
+
+export const STOP_TYPES = [
+  ['board', 'Naik'],
+  ['rest', 'Istirahat'],
+  ['drop', 'Turun'],
+] as const;
+
+/**
+ * Pratinjau rute dari perhentian, sama dengan backend (routesFromStops): setiap kota Naik × kota Turun sesudahnya;
+ * titik = perhentian pertama di kota itu. Nama kota final (alias Jogja → Yogyakarta) ditentukan backend.
+ */
+export function routesFromStops(stops: TripStop[]) {
+  const key = (c: string) => c.trim().toLowerCase();
+  const out: { from: string; to: string; boardPoint: string; dropPoint: string; minutes: number; offset: number }[] = [];
+  const seen = new Set<string>();
+  stops.forEach((b, i) => {
+    if (b.type !== 'board' || !b.city.trim()) return;
+    for (const d of stops.slice(i + 1)) {
+      if (d.type !== 'drop' || !d.city.trim() || key(d.city) === key(b.city)) continue;
+      const k = `${key(b.city)}>${key(d.city)}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push({ from: b.city.trim(), to: d.city.trim(), boardPoint: b.point.trim(), dropPoint: d.point.trim(), minutes: d.minutes - b.minutes, offset: b.minutes });
+    }
+  });
+  return out;
+}
+
+/** Kesalahan daftar perhentian yang terlihat sebelum disimpan (null = siap disimpan). */
+export function stopsProblem(stops: TripStop[]): string | null {
+  if (!stops.length) return null;
+  const empty = stops.findIndex((s) => s.city.trim().length < 2 || s.point.trim().length < 2);
+  if (empty >= 0) return `Perhentian ${empty + 1}: isi kota dan titik (minimal 2 huruf).`;
+  if (stops.some((s) => s.minutes < 0)) return 'Ada perhentian sebelum jam berangkat jadwal. Periksa jam atau hari.';
+  const back = stops.findIndex((s, i) => i > 0 && s.minutes < stops[i - 1].minutes);
+  if (back > 0) return `Jam perhentian ${back + 1} lebih awal dari perhentian sebelumnya. Urutkan sesuai perjalanan.`;
+  const routes = routesFromStops(stops);
+  if (!routes.length) return 'Butuh minimal satu perhentian Naik dan satu perhentian Turun di kota lain sesudahnya.';
+  const short = routes.find((r) => r.minutes < 10);
+  if (short) return `Perjalanan ${short.from} → ${short.to} minimal 10 menit.`;
+  return null;
+}
+
 export interface TripTier {
   key: string;
   name: string;
@@ -111,6 +161,8 @@ export interface TripDetail {
   tiers: TripTier[];
   promos: TripPromo[];
   facilities: string[];
+  /** Perhentian (kosong = tanpa "Lihat rute & perhentian") */
+  stops: TripStop[];
   status: TripStatus;
   /** Denah tetap dari data armada: varian & kursi tidak bisa diubah, harga & nama bisa */
   hasLayout: boolean;
@@ -136,6 +188,8 @@ export interface TripInput {
   tiers: TripTier[];
   promos: TripPromo[];
   status?: 'draft' | 'live';
+  /** Tidak dikirim = perhentian tidak diubah; [] = hapus semua perhentian */
+  stops?: TripStop[];
   /** Tidak dikirim = foto tidak diubah */
   image?: string | null;
   photos?: Omit<TripPhoto, 'url'>[];
