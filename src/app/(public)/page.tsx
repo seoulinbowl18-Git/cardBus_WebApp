@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { FeaturedGrid, FeatureStrip, Greeting, PromoRow, SectionTitle } from '@/components/home/home-sections';
 import { SearchCard } from '@/components/home/search-card';
+import { loadBanners } from '@/lib/banners';
 import { loadFeatured } from '@/lib/featured';
-import { SPECIAL_PROMOS, TOP_PROMOS } from '@/lib/home-content';
 
-// Produk unggulan dikelola di Admin Pusat: beranda diperbarui paling lama tiap 30 detik.
+// Banner & produk unggulan dikelola di Admin Pusat: beranda diperbarui paling lama tiap 30 detik.
 export const revalidate = 30;
 
 /**
@@ -12,7 +12,7 @@ export const revalidate = 30;
  * kartu cari, Promo & Info, Produk unggulan, Promo spesial, dan keunggulan CardBus.
  */
 export default async function HomePage() {
-  const featured = await loadFeatured();
+  const [featured, banners] = await Promise.all([loadFeatured(), loadBanners()]);
   return (
     <div className="space-y-8">
       {/* Hero selebar layar: sapaan + bilah cari horizontal */}
@@ -45,8 +45,12 @@ export default async function HomePage() {
       </section>
 
       <section id="promo" className="scroll-mt-24 pt-2">
-        <SectionTitle title="Promo & Info" />
-        <PromoRow promos={TOP_PROMOS} tall />
+        {banners.top.length > 0 && (
+          <>
+            <SectionTitle title="Promo & Info" trailing={<Link href="/promo" className="hover:underline">Lihat semua ›</Link>} />
+            <PromoRow promos={banners.top} tall />
+          </>
+        )}
       </section>
 
       {featured.length > 0 && (
@@ -56,10 +60,12 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section>
-        <SectionTitle title="Promo spesial" trailing={`${SPECIAL_PROMOS.length} promo`} />
-        <PromoRow promos={SPECIAL_PROMOS} />
-      </section>
+      {banners.special.length > 0 && (
+        <section>
+          <SectionTitle title="Promo spesial" trailing={`${banners.special.length} promo`} />
+          <PromoRow promos={banners.special} />
+        </section>
+      )}
 
       <section>
         <SectionTitle title="Kenapa CardBus?" />
