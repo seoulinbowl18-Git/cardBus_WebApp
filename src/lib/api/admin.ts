@@ -163,6 +163,45 @@ export interface Stats {
   trips: Partial<Record<TripStatus, number>>;
 }
 
+/** Kartu "Produk unggulan" di beranda (tabel featured_products). */
+export interface FeaturedCard {
+  id: string;
+  poId: string;
+  poName: string;
+  /** Logo PO dari data mitra (tidak disimpan di kartu) */
+  logo: string | null;
+  /** Foto tersimpan (path) & untuk pratinjau (URL) */
+  image: string | null;
+  imageUrl: string | null;
+  busClass: string;
+  from: string;
+  to: string;
+  boardPoint: string | null;
+  price: number | null;
+  oldPrice: number | null;
+  tag: string;
+  comingSoon: boolean;
+  active: boolean;
+  sortOrder: number;
+  /** false = PO nonaktif / dihapus: kartu tidak tampil walau aktif */
+  poActive: boolean;
+}
+
+/** image: tidak dikirim = foto tetap, null = tanpa foto, string = path hasil unggah */
+export interface FeaturedInput {
+  poId: string;
+  image?: string | null;
+  busClass: string;
+  from: string;
+  to: string;
+  boardPoint: string | null;
+  price: number | null;
+  oldPrice: number | null;
+  tag: string;
+  comingSoon: boolean;
+  active: boolean;
+}
+
 export const adminApi = {
   sendOtp: (phone: string) => adminClient.post<SendOtpResponse>('/api/auth/send-otp', { phone }),
   /** scope 'admin': backend menolak nomor yang bukan admin dan tidak membuat akun baru. */
@@ -183,6 +222,11 @@ export const adminApi = {
   deleteTrip: (id: string) => adminClient.del<{ deleted: true; bookings: number }>(`/api/admin/trips/${encodeURIComponent(id)}`),
   deletePartner: (id: string) =>
     adminClient.del<{ deleted: true; trips: number; bookings: number }>(`/api/admin/partners/${encodeURIComponent(id)}`),
+  featured: () => adminClient.get<FeaturedCard[]>('/api/admin/featured'),
+  createFeatured: (f: FeaturedInput) => adminClient.post<FeaturedCard>('/api/admin/featured', f),
+  updateFeatured: (id: string, f: FeaturedInput) => adminClient.put<FeaturedCard>(`/api/admin/featured/${encodeURIComponent(id)}`, f),
+  orderFeatured: (ids: string[]) => adminClient.post<FeaturedCard[]>('/api/admin/featured/order', { ids }),
+  deleteFeatured: (id: string) => adminClient.del<{ deleted: true }>(`/api/admin/featured/${encodeURIComponent(id)}`),
   uploadImage: (file: Blob) => adminClient.upload<StoredImage & { id: string; size: number }>('/api/admin/media', file),
 
   stats: (days: number) => adminClient.get<Stats>('/api/admin/stats', { days }),

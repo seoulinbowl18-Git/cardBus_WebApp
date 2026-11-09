@@ -18,17 +18,18 @@ export interface Promo {
   soonMessage?: string;
 }
 
+/** Kartu "Produk unggulan": dari GET /api/featured (dikelola Admin Pusat), cadangan [FEATURED]. */
 export interface FeaturedProduct {
   id: string;
   poName: string;
-  logo?: string;
-  image: string;
+  logo?: string | null;
+  image?: string | null;
   busClass: string;
   from: string;
   to: string;
-  boardPoint: string;
-  price?: number;
-  oldPrice?: number;
+  boardPoint?: string | null;
+  price?: number | null;
+  oldPrice?: number | null;
   tag: string;
   comingSoon?: boolean;
 }
@@ -68,7 +69,10 @@ export const SPECIAL_PROMOS: Promo[] = [
   },
 ];
 
-/** "Produk unggulan" (MockData.featured). */
+/**
+ * "Produk unggulan" cadangan, dipakai hanya bila backend tidak bisa dihubungi. Isi aslinya dikelola di
+ * Admin Pusat → Produk Unggulan (tabel featured_products, awalnya diisi dengan daftar ini).
+ */
 export const FEATURED: FeaturedProduct[] = [
   {
     id: 'san-pku', poName: 'SAN', image: img('san_jetbus5.jpg'), busClass: 'Jetbus 5 SHD · Madar Class',
