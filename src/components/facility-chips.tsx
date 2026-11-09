@@ -1,17 +1,19 @@
-import { facilityInfo } from '@/lib/facilities';
+import { parseFacilities } from '@/lib/facilities';
 
-export function FacilityChips({ codes }: { codes?: string[] }) {
-  if (!codes?.length) return null;
+/** Chip fasilitas: dikenal → ikon khusus; fasilitas baru → ikon generik + teks aslinya (tidak dibuang). */
+export function FacilityChips({ codes }: { codes?: string[] | string | null }) {
+  const items = parseFacilities(codes);
+  if (!items.length) return null;
   return (
-    <ul className="flex flex-wrap gap-1.5">
-      {codes.map((c) => {
-        const f = facilityInfo(c);
-        return (
-          <li key={c} className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand-dark">
-            <span aria-hidden>{f.icon}</span> {f.label}
-          </li>
-        );
-      })}
+    <ul className="flex flex-wrap gap-1.5" aria-label="Fasilitas">
+      {items.map((f) => (
+        <li
+          key={f.code}
+          className={`max-w-[14rem] truncate rounded-full px-2 py-0.5 text-xs font-medium ${f.known ? 'bg-brand/10 text-brand-dark' : 'border border-brand/20 bg-white text-ink'}`}
+        >
+          <span aria-hidden>{f.icon}</span> {f.label}
+        </li>
+      ))}
     </ul>
   );
 }

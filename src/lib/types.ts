@@ -64,7 +64,8 @@ export interface Trip {
   image?: string | null;
   logo?: string | null;
   /** Kode fasilitas: ac, toilet, selimut, usb, legrest, makan, tv, kompartemen. */
-  facilities?: string[];
+  /** Kode, teks bebas, atau string berformat koma (dibaca parseFacilities) */
+  facilities?: string[] | string;
   /** Mis. "2-2", "2-1 · 21 kursi", "Exe Plus + Sleeper". */
   seatType?: string | null;
   /** Denah per lantai (format prototipe CardBus). Kosong di backend versi lama. */
