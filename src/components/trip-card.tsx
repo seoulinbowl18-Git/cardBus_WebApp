@@ -25,7 +25,7 @@ export function TripCard({ trip, href }: { trip: Trip; href?: string }) {
       {href && <Link href={href} aria-label={`Pilih jadwal PO ${trip.poName} ${trip.busClass} ${trip.depart}`} className="absolute inset-0 rounded-2xl" />}
       {hasGallery ? (
         // Galeri foto armada: di bawah info jadwal (HP), di kiri (layar lebar)
-        <BusPhotoGrid trip={trip} className="order-last sm:order-first sm:w-56 sm:shrink-0" />
+        <BusPhotoGrid trip={trip} className="order-last sm:order-first sm:w-56 sm:self-center" />
       ) : (
         <BusPhoto src={trip.image} alt={trip.poName} className="hidden h-auto w-40 shrink-0 rounded-xl sm:block" />
       )}
