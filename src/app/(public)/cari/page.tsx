@@ -132,13 +132,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       <div className="grid gap-2.5">
         {trips.map((t) =>
           seatsLeft(t) > 0 ? (
-            <Link
-              key={`${t.id}-${t.date}`}
-              href={`/checkout?${new URLSearchParams({ tripId: t.id, from, to, date, ...points })}`}
-              className="block rounded-2xl transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <TripCard trip={t} />
-            </Link>
+            <TripCard key={`${t.id}-${t.date}`} trip={t} href={`/checkout?${new URLSearchParams({ tripId: t.id, from, to, date, ...points })}`} />
           ) : (
             <TripCard key={`${t.id}-${t.date}`} trip={t} />
           ),
