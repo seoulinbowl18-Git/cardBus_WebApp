@@ -179,6 +179,69 @@ export interface TripDetail {
   updatedAt: string;
 }
 
+/** Status tiket di manifest */
+export type ManifestStatus = 'pending' | 'paid' | 'boarded' | 'completed' | 'expired' | 'cancelled';
+export type ManifestFilter = 'active' | 'paid' | 'pending' | 'all';
+
+export interface ManifestQuery {
+  date: string;
+  tripId?: string;
+  poId?: string;
+  status?: ManifestFilter;
+}
+
+/** Satu baris manifest = satu kursi / penumpang */
+export interface ManifestRow {
+  bookingId: string;
+  code: string;
+  tripId: string;
+  poName: string | null;
+  busClass: string | null;
+  depart: string;
+  from: string | null;
+  to: string | null;
+  boardPoint: string | null;
+  dropPoint: string | null;
+  seat: string;
+  /** "Deck Bawah" / "Deck Atas" (bus bertingkat), null = satu lantai */
+  deck: string | null;
+  /** Urutan lantai di denah (1 = Deck Bawah), untuk mengurutkan manifest */
+  deckNo: number | null;
+  tierKey: string | null;
+  tierName: string | null;
+  passenger: string | null;
+  phone: string | null;
+  email: string | null;
+  status: ManifestStatus;
+  payMethod: string | null;
+  unitPrice: number;
+  paidAt: string | null;
+  checkedInAt: string | null;
+  createdAt: string;
+}
+
+export interface ManifestTrip {
+  tripId: string;
+  poId: string;
+  poName: string | null;
+  busClass: string | null;
+  depart: string;
+  deleted: boolean;
+  capacity: number;
+  paid: number;
+  pending: number;
+  boarded: number;
+  orders: number;
+}
+
+export interface Manifest {
+  date: string;
+  status: ManifestFilter;
+  totals: { passengers: number; paid: number; pending: number; boarded: number; orders: number };
+  trips: ManifestTrip[];
+  rows: ManifestRow[];
+}
+
 export interface TripInput {
   poId?: string;
   busClass: string;
@@ -303,6 +366,7 @@ export const adminApi = {
   updatePartner: (id: string, p: PartnerInput) => adminClient.put<Partner>(`/api/admin/partners/${encodeURIComponent(id)}`, p),
 
   trips: (q: { poId?: string; status?: string } = {}) => adminClient.get<TripSummary[]>('/api/admin/trips', q),
+  manifest: (q: ManifestQuery, signal?: AbortSignal) => adminClient.get<Manifest>('/api/admin/manifest', { ...q }, signal),
   seatTemplates: () => adminClient.get<SeatTemplate[]>('/api/admin/seat-templates'),
   trip: (id: string) => adminClient.get<TripDetail>(`/api/admin/trips/${encodeURIComponent(id)}`),
   createTrip: (t: TripInput) => adminClient.post<TripDetail>('/api/admin/trips', t),

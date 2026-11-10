@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
+import { ManifestView } from '@/components/admin/manifest-view';
 import { ImagePicker, PhotoGallery } from '@/components/admin/image-input';
 import { SeatPlanEditor } from '@/components/admin/seat-plan-editor';
 import { StopsEditor } from '@/components/admin/stops-editor';
@@ -16,7 +17,7 @@ import {
 import { formatDuration, formatRupiah } from '@/lib/format';
 import { buildLayout, type SeatPlan, type SeatTemplate } from '@/lib/seat-plan';
 
-type Tab = 'jadwal' | 'rute' | 'perhentian' | 'denah' | 'harga' | 'foto';
+type Tab = 'jadwal' | 'rute' | 'perhentian' | 'denah' | 'harga' | 'foto' | 'manifest';
 const PAGE = 60;
 
 interface Form {
@@ -118,6 +119,7 @@ export default function TripEditorPage() {
         setTrip(t);
         setForm(fromDetail(t));
         // Baru dibuat di /admin/jadwal/baru: halaman ini dimuat ulang, jadi pesan tersimpan dibawa lewat ?dibuat=1
+        if (new URLSearchParams(window.location.search).get('tab') === 'manifest') setTab('manifest');
         if (new URLSearchParams(window.location.search).has('dibuat')) {
           setSaved(savedText(t.status));
           window.history.replaceState(null, '', window.location.pathname);
@@ -236,7 +238,10 @@ export default function TripEditorPage() {
           </h1>
           {trip && (
             <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
-              <StatusPill status={trip.status} /> {trip.routes.length} rute · {trip.bookings} pesanan
+              <StatusPill status={trip.status} /> {trip.routes.length} rute ·{' '}
+              <button type="button" className="font-semibold text-brand underline-offset-2 hover:underline" onClick={() => setTab('manifest')}>
+                {trip.bookings} pesanan · lihat manifest
+              </button>
               {po && !po.active && <span className="font-semibold text-red-700">· PO nonaktif: jadwal tidak tampil walau Tayang</span>}
             </p>
           )}
@@ -244,7 +249,7 @@ export default function TripEditorPage() {
       </div>
 
       <div role="tablist" className="flex gap-1 border-b border-line">
-        {([['jadwal', 'Jadwal'], ['rute', `Rute (${form.routes.length})`], ['perhentian', `Perhentian (${form.stops.length})`], ['denah', `Denah Kursi${form.seatPlan ? ` (${form.seatPlan.decks.length} lantai)` : ''}`], ['harga', 'Harga & Promo'], ['foto', `Foto (${form.photos.length})`]] as const).map(([k, label]) => (
+        {([['jadwal', 'Jadwal'], ['rute', `Rute (${form.routes.length})`], ['perhentian', `Perhentian (${form.stops.length})`], ['denah', `Denah Kursi${form.seatPlan ? ` (${form.seatPlan.decks.length} lantai)` : ''}`], ['harga', 'Harga & Promo'], ['foto', `Foto (${form.photos.length})`], ...(isNew ? [] : [['manifest', 'Manifest Penumpang'] as const])] as const).map(([k, label]) => (
           <button
             key={k}
             role="tab"
@@ -294,6 +299,7 @@ export default function TripEditorPage() {
         />
       )}
       {tab === 'harga' && <PricesTab form={form} set={set} hasLayout={hasLayout} />}
+      {tab === 'manifest' && !isNew && <ManifestView tripId={id} />}
       {tab === 'foto' && (
         <Card className="space-y-6">
           <ImagePicker
@@ -348,7 +354,8 @@ export default function TripEditorPage() {
         </ConfirmDialog>
       )}
 
-      <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-white/95 px-4 py-3 backdrop-blur">
+      {/* Manifest hanya-baca: tombol simpan / hapus disembunyikan (juga saat dicetak) */}
+      <div className={`sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-white/95 px-4 py-3 backdrop-blur print:hidden ${tab === 'manifest' ? 'hidden' : ''}`}>
         <button className={btnPrimary} onClick={save} disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan'}</button>
         {saved && <span role="status" className="text-sm font-semibold text-[#1f6a3a]">{saved}</span>}
         {!isNew && trip && (
