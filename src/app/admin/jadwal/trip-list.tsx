@@ -7,7 +7,7 @@ import { ConfirmDialog } from '@/components/admin/confirm-dialog';
 import { ErrorBox, PageHead, StatusPill, btnPrimary, inputCls } from '@/components/admin/ui';
 import { BusPhoto } from '@/components/bus-photo';
 import { ApiError } from '@/lib/api/client';
-import { TRIP_STATUS, adminApi, daysText, type Partner, type TripStatus, type TripSummary } from '@/lib/api/admin';
+import { REVIEW_ISSUE, TRIP_STATUS, adminApi, daysText, type Partner, type TripStatus, type TripSummary } from '@/lib/api/admin';
 import { formatRupiah } from '@/lib/format';
 
 /** Daftar jadwal semua PO (GET /api/admin/trips), filter PO & status lewat URL agar bisa dibagikan. */
@@ -38,6 +38,11 @@ export function TripList() {
   useEffect(() => {
     adminApi.partners().then(setPartners).catch(() => {});
   }, []);
+  // Jadwal yang ditandai salah oleh PO di aplikasi Mitra (di luar filter yang sedang dipilih)
+  const [toFix, setToFix] = useState(0);
+  useEffect(() => {
+    adminApi.trips({ status: 'fix' }).then((l) => setToFix(l.length)).catch(() => {});
+  }, [trips]);
 
   const setFilter = (k: 'poId' | 'status', v: string) => {
     const next = new URLSearchParams(params);
@@ -85,7 +90,7 @@ export function TripList() {
     <>
       <PageHead
         title="Jadwal, Rute & Harga"
-        sub="Jadwal Tayang langsung tampil di aplikasi penumpang; Draf disembunyikan."
+        sub="Jadwal Tayang langsung tampil di aplikasi penumpang; Draf disembunyikan. Jadwal Mode Kuota bisa dikirim ke PO untuk divalidasi dulu."
         action={
           <Link href="/admin/jadwal/baru" className={btnPrimary}>
             + Jadwal baru
@@ -107,6 +112,12 @@ export function TripList() {
           ))}
         </select>
       </div>
+      {toFix > 0 && status !== 'fix' && (
+        <p role="status" className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#fbe9e9] p-3 text-sm font-semibold text-[#9b1c1c]">
+          {toFix} jadwal ditandai salah oleh PO di aplikasi Mitra dan menunggu perbaikan Admin Pusat.
+          <button className="underline" onClick={() => setFilter('status', 'fix')}>Lihat</button>
+        </p>
+      )}
       {error && <div className="mb-3"><ErrorBox message={error} onRetry={load} /></div>}
       {notice && <p role="status" className="mb-3 rounded-lg bg-[#e5f4ea] p-3 text-sm font-semibold text-[#1f6a3a]">{notice}</p>}
       {removing && (
@@ -171,7 +182,14 @@ export function TripList() {
                     <p className="text-xs text-faint">{t.routes} rute</p>
                   </td>
                   <td className="px-3 py-3 text-right tabular-nums">{t.minPrice ? formatRupiah(t.minPrice) : '–'}</td>
-                  <td className="px-3 py-3"><StatusPill status={t.status} /></td>
+                  <td className="px-3 py-3">
+                    <StatusPill status={t.status} />
+                    {t.status === 'fix' && (t.reviewIssues?.length ?? 0) > 0 && (
+                      <p className="mt-1 max-w-[180px] text-xs font-semibold text-[#9b1c1c]">
+                        Salah: {t.reviewIssues!.map((k) => REVIEW_ISSUE[k]?.label ?? k).join(', ')}
+                      </p>
+                    )}
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <button
                       onClick={() => toggle(t)}

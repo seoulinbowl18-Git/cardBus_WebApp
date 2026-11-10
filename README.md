@@ -68,10 +68,17 @@ Panel pemilik CardBus, terpisah dari tampilan penumpang: layout, menu, dan sesi 
 | --- | --- |
 | `/admin/masuk` | Login OTP WhatsApp khusus admin (`verify-otp` dengan `scope: "admin"`) |
 | `/admin` | Ringkasan: omzet, tiket, komisi CardBus, diskon voucher, omzet harian, per PO |
-| `/admin/jadwal` | Semua jadwal + filter PO/status, tayangkan / sembunyikan |
+| `/admin/jadwal` | Semua jadwal + filter PO/status, tayangkan / sembunyikan; spanduk jadwal yang ditandai salah oleh PO |
 | `/admin/jadwal/baru`, `/admin/jadwal/:id` | Editor: tab Jadwal, Rute (titik naik/turun, durasi, jam khusus), Harga & Promo |
 | `/admin/po` | Mitra PO: level, admin PO, komisi, aktif/nonaktif |
 | `/admin/unggulan` | Produk Unggulan: kartu rute favorit di beranda (foto WebP, PO, rute, titik naik, harga & harga coret, label badge, segera hadir, aktif, urutan, hapus) |
+
+**Validasi jadwal oleh PO (Mode Kuota)**: jadwal PO Level 1 yang belum tayang bisa dikirim ke PO lewat panel
+**Validasi PO** di editor jadwal (atau status *Kirim ke PO untuk divalidasi*) dengan catatan. PO mengecek di aplikasi
+CardBus Mitra: *Sesuai* → jadwal langsung Tayang; *Ada yang salah* → status *Perlu koreksi* dengan bagian yang ditandai
+(Jam berangkat, Rute / kelas, Titik naik, Hari jalan, Kuota / nomor kursi, Harga). Bagian itu tampil sebagai tombol
+yang membuka tab tempat memperbaikinya (tab diberi titik merah), lalu **Simpan & kirim ulang ke PO**. Percakapan
+Admin Pusat ↔ PO tersimpan di jadwal (`reviewThread`). PO harus punya nomor HP admin agar bisa masuk ke aplikasi Mitra.
 
 **Logo & foto**: form Mitra PO punya unggah logo; editor jadwal punya tab **Foto** (sampul kartu jadwal + galeri armada:
 tambah banyak sekaligus, keterangan, kategori, urutan, jadikan sampul, hapus). Gambar dikecilkan di browser

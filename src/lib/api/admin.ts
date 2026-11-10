@@ -10,6 +10,18 @@ export const adminClient = createApiClient();
 
 export type TripStatus = 'draft' | 'review' | 'fix' | 'live';
 
+/**
+ * Validasi jadwal oleh PO di aplikasi CardBus Mitra: Admin Pusat mengirim jadwal ke `review`,
+ * PO menyetujui (→ live) atau menandai bagian yang salah (→ fix) dengan catatan.
+ */
+export type ReviewIssue = 'dep' | 'route' | 'board' | 'days' | 'seats' | 'price';
+export interface ReviewMessage {
+  who: 'pusat' | 'po';
+  text: string;
+  /** ISO */
+  at: string;
+}
+
 export interface AdminMe {
   id: string;
   name: string | null;
@@ -147,6 +159,9 @@ export interface TripSummary {
   photos: number;
   adminManaged: boolean;
   updatedAt: string;
+  /** Bagian yang ditandai salah oleh PO (status fix) */
+  reviewIssues?: ReviewIssue[];
+  reviewThread?: ReviewMessage[];
 }
 
 export interface TripDetail {
@@ -177,6 +192,8 @@ export interface TripDetail {
   photos: TripPhoto[];
   adminManaged: boolean;
   updatedAt: string;
+  reviewIssues?: ReviewIssue[];
+  reviewThread?: ReviewMessage[];
 }
 
 /** Status tiket di manifest */
@@ -253,7 +270,10 @@ export interface TripInput {
   routes: TripRoute[];
   tiers: TripTier[];
   promos: TripPromo[];
-  status?: 'draft' | 'live';
+  /** review = kirim ke admin PO untuk divalidasi di aplikasi Mitra (tanda salah sebelumnya dihapus) */
+  status?: 'draft' | 'review' | 'live';
+  /** Catatan untuk PO saat dikirim ke review (masuk percakapan) */
+  reviewNote?: string;
   /** Tidak dikirim = perhentian tidak diubah; [] = hapus semua perhentian */
   stops?: TripStop[];
   /** Tidak dikirim = denah tidak diubah; null = hapus denah (nomor kursi manual per varian) */
@@ -371,8 +391,8 @@ export const adminApi = {
   trip: (id: string) => adminClient.get<TripDetail>(`/api/admin/trips/${encodeURIComponent(id)}`),
   createTrip: (t: TripInput) => adminClient.post<TripDetail>('/api/admin/trips', t),
   updateTrip: (id: string, t: TripInput) => adminClient.put<TripDetail>(`/api/admin/trips/${encodeURIComponent(id)}`, t),
-  setTripStatus: (id: string, status: 'draft' | 'live') =>
-    adminClient.post<TripSummary>(`/api/admin/trips/${encodeURIComponent(id)}/status`, { status }),
+  setTripStatus: (id: string, status: 'draft' | 'review' | 'live', note?: string) =>
+    adminClient.post<TripSummary>(`/api/admin/trips/${encodeURIComponent(id)}/status`, { status, ...(note && { note }) }),
   /** Jadwal hilang dari aplikasi penumpang & panel; pesanan yang sudah ada tetap tersimpan. */
   deleteTrip: (id: string) => adminClient.del<{ deleted: true; bookings: number }>(`/api/admin/trips/${encodeURIComponent(id)}`),
   deletePartner: (id: string) =>
@@ -397,6 +417,16 @@ export const TRIP_STATUS: Record<TripStatus, { label: string; cls: string }> = {
   draft: { label: 'Draf', cls: 'bg-[#eef1f1] text-muted' },
   review: { label: 'Menunggu validasi PO', cls: 'bg-[#fff4d6] text-[#8a5a00]' },
   fix: { label: 'Perlu koreksi', cls: 'bg-[#fbe9e9] text-[#9b1c1c]' },
+};
+
+/** Kode bagian dari aplikasi Mitra → label (sama dengan aplikasi Mitra) + tab editor tempat memperbaikinya. */
+export const REVIEW_ISSUE: Record<ReviewIssue, { label: string; tab: 'jadwal' | 'rute' | 'perhentian' | 'denah' | 'harga' }> = {
+  dep: { label: 'Jam berangkat', tab: 'jadwal' },
+  route: { label: 'Rute / kelas', tab: 'rute' },
+  board: { label: 'Titik naik', tab: 'rute' },
+  days: { label: 'Hari jalan', tab: 'jadwal' },
+  seats: { label: 'Kuota / nomor kursi', tab: 'harga' },
+  price: { label: 'Harga', tab: 'harga' },
 };
 
 const DOW = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
