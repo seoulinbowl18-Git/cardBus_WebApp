@@ -1,4 +1,5 @@
 import { createApiClient } from './client';
+import type { SeatPlan, SeatTemplate } from '@/lib/seat-plan';
 import type { LoginResponse, SendOtpResponse } from '@/lib/types';
 
 /**
@@ -163,6 +164,8 @@ export interface TripDetail {
   facilities: string[];
   /** Perhentian (kosong = tanpa "Lihat rute & perhentian") */
   stops: TripStop[];
+  /** Rencana denah dari template (tidak ada = denah data armada / nomor kursi manual) */
+  seatPlan?: SeatPlan;
   status: TripStatus;
   /** Denah tetap dari data armada: varian & kursi tidak bisa diubah, harga & nama bisa */
   hasLayout: boolean;
@@ -190,6 +193,8 @@ export interface TripInput {
   status?: 'draft' | 'live';
   /** Tidak dikirim = perhentian tidak diubah; [] = hapus semua perhentian */
   stops?: TripStop[];
+  /** Tidak dikirim = denah tidak diubah; null = hapus denah (nomor kursi manual per varian) */
+  seatPlan?: SeatPlan | null;
   /** Tidak dikirim = foto tidak diubah */
   image?: string | null;
   photos?: Omit<TripPhoto, 'url'>[];
@@ -298,6 +303,7 @@ export const adminApi = {
   updatePartner: (id: string, p: PartnerInput) => adminClient.put<Partner>(`/api/admin/partners/${encodeURIComponent(id)}`, p),
 
   trips: (q: { poId?: string; status?: string } = {}) => adminClient.get<TripSummary[]>('/api/admin/trips', q),
+  seatTemplates: () => adminClient.get<SeatTemplate[]>('/api/admin/seat-templates'),
   trip: (id: string) => adminClient.get<TripDetail>(`/api/admin/trips/${encodeURIComponent(id)}`),
   createTrip: (t: TripInput) => adminClient.post<TripDetail>('/api/admin/trips', t),
   updateTrip: (id: string, t: TripInput) => adminClient.put<TripDetail>(`/api/admin/trips/${encodeURIComponent(id)}`, t),
