@@ -5,13 +5,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
 import { ManifestView } from '@/components/admin/manifest-view';
+import { ReviewPanel } from '@/components/admin/review-panel';
 import { ImagePicker, PhotoGallery } from '@/components/admin/image-input';
 import { SeatPlanEditor } from '@/components/admin/seat-plan-editor';
 import { StopsEditor } from '@/components/admin/stops-editor';
 import { Card, ErrorBox, Field, StatusPill, btnDanger, btnPrimary, btnSecondary, inputCls } from '@/components/admin/ui';
 import { ApiError } from '@/lib/api/client';
 import {
-  DAY_ORDER, adminApi, dowName, stopsProblem, type Partner, type StoredImage, type TripDetail, type TripInput, type TripPhoto, type TripPromo,
+  DAY_ORDER, REVIEW_ISSUE, adminApi, dowName, stopsProblem, type Partner, type StoredImage, type TripDetail, type TripInput, type TripPhoto, type TripPromo,
   type TripRoute, type TripStatus, type TripStop, type TripTier,
 } from '@/lib/api/admin';
 import { formatDuration, formatRupiah } from '@/lib/format';
@@ -32,6 +33,8 @@ interface Form {
   tiers: TripTier[];
   promos: TripPromo[];
   status: TripStatus;
+  /** Catatan untuk PO saat status dipilih "Kirim ke PO" */
+  reviewNote: string;
   /** Foto sampul kartu jadwal & galeri armada */
   image: StoredImage | null;
   photos: TripPhoto[];
@@ -52,6 +55,7 @@ const NEW_FORM: Form = {
   tiers: [{ key: 'base', name: 'Executive', price: 0, seats: [] }],
   promos: [],
   status: 'draft',
+  reviewNote: '',
   image: null,
   photos: [],
   photosChanged: false,
@@ -63,7 +67,7 @@ const NEW_FORM: Form = {
 
 const fromDetail = (t: TripDetail): Form => ({
   poId: t.poId, busClass: t.busClass ?? '', busType: t.busType ?? '', seatType: t.seatType ?? '', depart: t.depart, days: t.days,
-  facilities: t.facilities.join(', '), routes: t.routes, tiers: t.tiers, promos: t.promos, status: t.status,
+  facilities: t.facilities.join(', '), routes: t.routes, tiers: t.tiers, promos: t.promos, status: t.status, reviewNote: '',
   image: t.image && t.imageUrl ? { path: t.image, url: t.imageUrl } : null, photos: t.photos, photosChanged: false,
   stops: t.stops ?? [], stopsChanged: false,
   seatPlan: t.seatPlan ?? null, planChanged: false,
@@ -80,8 +84,12 @@ function tiersFromPlan(plan: SeatPlan, old: TripTier[]): TripTier[] | null {
   return built.tiers.map((t) => ({ key: t.key, name: t.name, price: price.get(t.key) ?? old[0]?.price ?? 0, seats: t.seats }));
 }
 
-const savedText = (status: TripStatus) =>
-  status === 'live' ? 'Tersimpan dan tayang di aplikasi penumpang.' : 'Tersimpan. Jadwal belum tayang (draf).';
+const savedText = (status: TripStatus) => ({
+  live: 'Tersimpan dan tayang di aplikasi penumpang.',
+  draft: 'Tersimpan. Jadwal belum tayang (draf).',
+  review: 'Tersimpan dan dikirim ke PO. Jadwal tayang setelah PO menyetujui di aplikasi Mitra.',
+  fix: 'Tersimpan. PO masih menandai jadwal ini perlu koreksi: kirim ulang ke PO bila sudah diperbaiki.',
+})[status];
 
 const routeLabel = (r: Pick<TripRoute, 'from' | 'to'>) => `${r.from || '?'} → ${r.to || '?'}`;
 const seatList = (s: string) => s.toUpperCase().split(/[\s,]+/).filter(Boolean);
@@ -154,7 +162,8 @@ export default function TripEditorPage() {
     setForm((f) => (f ? { ...f, seatType: t.seatType, busType: f.busType || t.busType } : f));
   }, []);
 
-  async function save() {
+  /** `send` = kirim ke PO untuk divalidasi (dari panel Validasi PO) dengan catatan. */
+  async function save(send?: { note: string }) {
     if (!form) return;
     if (form.planChanged && form.seatPlan) {
       const problem = buildLayout(form.seatPlan);
@@ -182,8 +191,15 @@ export default function TripEditorPage() {
       tiers: form.tiers, promos: form.promos,
       ...(form.stopsChanged && { stops: form.stops }),
       ...(form.planChanged && { seatPlan: form.seatPlan }),
-      // Status menunggu validasi / perlu koreksi dari aplikasi Mitra dibiarkan kecuali admin memilih Draf / Tayang.
-      ...((form.status === 'draft' || form.status === 'live') && { status: form.status }),
+      // Status menunggu validasi / perlu koreksi dari aplikasi Mitra dibiarkan kecuali admin memilih Draf / Tayang,
+      // atau mengirim (ulang) ke PO. Jadwal yang sudah menunggu PO tidak dikirim ulang hanya karena disimpan.
+      ...(send
+        ? { status: 'review' as const, ...(send.note && { reviewNote: send.note }) }
+        : form.status === 'draft' || form.status === 'live'
+          ? { status: form.status }
+          : form.status === 'review' && (isNew || trip?.status !== 'review')
+            ? { status: 'review' as const, ...(form.reviewNote.trim() && { reviewNote: form.reviewNote.trim() }) }
+            : {}),
       ...(form.photosChanged && {
         image: form.image?.path ?? null,
         photos: form.photos.map(({ src, file, cat, caption }) => ({ src, file, cat: cat || undefined, caption: caption || undefined })),
@@ -227,6 +243,8 @@ export default function TripEditorPage() {
   const po = partners.find((p) => p.id === form.poId);
   // Denah template di form, atau denah tersimpan (data armada) yang belum diganti / dihapus
   const hasLayout = form.seatPlan ? true : form.planChanged ? false : Boolean(trip?.hasLayout);
+  // Tab yang berisi bagian yang ditandai salah oleh PO
+  const flagged = new Set<string>(trip?.status === 'fix' ? (trip.reviewIssues ?? []).map((k) => REVIEW_ISSUE[k]?.tab) : []);
 
   return (
     <div className="space-y-4">
@@ -248,6 +266,19 @@ export default function TripEditorPage() {
         </div>
       </div>
 
+      {trip && po && po.level < 2 && (trip.status === 'review' || trip.status === 'fix' || trip.status === 'draft' || (trip.reviewThread?.length ?? 0) > 0) && (
+        <ReviewPanel
+          status={trip.status}
+          issues={trip.reviewIssues ?? []}
+          thread={trip.reviewThread ?? []}
+          poName={po.short}
+          poReady={Boolean(po.adminPhone)}
+          busy={busy}
+          onOpenTab={setTab}
+          onSend={(note) => save({ note })}
+        />
+      )}
+
       <div role="tablist" className="flex gap-1 border-b border-line">
         {([['jadwal', 'Jadwal'], ['rute', `Rute (${form.routes.length})`], ['perhentian', `Perhentian (${form.stops.length})`], ['denah', `Denah Kursi${form.seatPlan ? ` (${form.seatPlan.decks.length} lantai)` : ''}`], ['harga', 'Harga & Promo'], ['foto', `Foto (${form.photos.length})`], ...(isNew ? [] : [['manifest', 'Manifest Penumpang'] as const])] as const).map(([k, label]) => (
           <button
@@ -258,6 +289,7 @@ export default function TripEditorPage() {
             className={`border-b-2 px-4 pb-2.5 pt-1 text-sm font-bold ${tab === k ? 'border-brand text-brand' : 'border-transparent text-muted hover:text-ink'}`}
           >
             {label}
+            {flagged.has(k) && <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-red-600 align-middle" title="Ditandai salah oleh PO" />}
           </button>
         ))}
       </div>
@@ -267,6 +299,7 @@ export default function TripEditorPage() {
           form={form}
           set={set}
           isNew={isNew}
+          savedStatus={trip?.status ?? null}
           partners={partners}
           templates={templates}
           onTemplate={(t) => {
@@ -356,7 +389,7 @@ export default function TripEditorPage() {
 
       {/* Manifest hanya-baca: tombol simpan / hapus disembunyikan (juga saat dicetak) */}
       <div className={`sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-white/95 px-4 py-3 backdrop-blur print:hidden ${tab === 'manifest' ? 'hidden' : ''}`}>
-        <button className={btnPrimary} onClick={save} disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan'}</button>
+        <button className={btnPrimary} onClick={() => save()} disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan'}</button>
         {saved && <span role="status" className="text-sm font-semibold text-[#1f6a3a]">{saved}</span>}
         {!isNew && trip && (
           <button className={`${btnDanger} ml-auto`} onClick={() => setConfirmDelete(true)}>Hapus jadwal</button>
@@ -376,11 +409,19 @@ export default function TripEditorPage() {
 
 type SetField = <K extends keyof Form>(k: K, v: Form[K] | ((old: Form[K]) => Form[K])) => void;
 
-function ScheduleTab({ form, set, isNew, partners, templates, onTemplate }: {
-  form: Form; set: SetField; isNew: boolean; partners: Partner[];
+function ScheduleTab({ form, set, isNew, savedStatus, partners, templates, onTemplate }: {
+  form: Form; set: SetField; isNew: boolean; savedStatus: TripStatus | null; partners: Partner[];
   templates: SeatTemplate[]; onTemplate: (t: SeatTemplate) => void;
 }) {
   const kuota = partners.filter((p) => p.level < 2);
+  const po = partners.find((p) => p.id === form.poId);
+  // Jadwal Mode Kuota yang belum tayang bisa dikirim ke PO untuk divalidasi dulu
+  const canReview = Boolean(po && po.level < 2) && savedStatus !== 'live';
+  const options = [
+    ['draft', 'Draf', 'Disembunyikan dari penumpang'],
+    ...(canReview ? [['review', savedStatus === 'fix' ? 'Kirim ulang ke PO' : 'Kirim ke PO untuk divalidasi', 'PO cek di aplikasi Mitra; tayang setelah PO setuju'] as const] : []),
+    ['live', 'Tayang', 'Langsung tampil di aplikasi penumpang'],
+  ] as const;
   const current = templates.find((t) => t.key === form.seatPlan?.template);
   return (
     <Card>
@@ -448,16 +489,21 @@ function ScheduleTab({ form, set, isNew, partners, templates, onTemplate }: {
       <fieldset className="mt-5">
         <legend className="mb-2 text-sm font-medium">Status</legend>
         <div className="flex flex-wrap gap-2 text-sm">
-          {([['draft', 'Draf', 'Disembunyikan dari penumpang'], ['live', 'Tayang', 'Langsung tampil di aplikasi penumpang']] as const).map(([s, label, hint]) => (
+          {options.map(([s, label, hint]) => (
             <label key={s} className={`flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 ${form.status === s ? 'border-brand bg-teal-soft' : 'border-slate-300'}`}>
               <input type="radio" name="status" className="mt-1" checked={form.status === s} onChange={() => set('status', s)} />
               <span className="font-medium">{label}<span className="block text-xs font-normal text-faint">{hint}</span></span>
             </label>
           ))}
-          {(form.status === 'review' || form.status === 'fix') && (
-            <span className="self-center text-xs text-muted">Sekarang: <StatusPill status={form.status} /> (tidak berubah kecuali dipilih)</span>
+          {savedStatus && (savedStatus === 'review' || savedStatus === 'fix') && form.status === savedStatus && (
+            <span className="self-center text-xs text-muted">Sekarang: <StatusPill status={savedStatus} /> (tidak berubah kecuali dipilih)</span>
           )}
         </div>
+        {form.status === 'review' && savedStatus !== 'review' && (
+          <Field label="Catatan untuk PO (opsional)" hint={po?.adminPhone ? `Dikirim ke admin PO ${po.short} di aplikasi CardBus Mitra` : 'PO ini belum punya nomor HP admin: isi dulu di menu Mitra PO agar PO bisa masuk ke aplikasi Mitra'} className="mt-3 max-w-xl">
+            <textarea className={`${inputCls} min-h-[64px]`} maxLength={500} value={form.reviewNote} onChange={(e) => set('reviewNote', e.target.value)} placeholder="Mis. Jadwal tambahan akhir pekan, mohon cek titik naik." />
+          </Field>
+        )}
       </fieldset>
     </Card>
   );
