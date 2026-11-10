@@ -67,18 +67,21 @@ export function BusPhotoGrid({ trip, className = '' }: { trip: GalleryTrip; clas
   }
   const n = ph.length;
   const at = (i: number) => ph[Math.min(i, n - 1)].src;
-  const tile = 'relative block h-full w-full overflow-hidden bg-[#dce4e4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand';
+  // Ukuran ubin dikunci oleh kisi (baris minmax(0,1fr)); foto diposisikan absolut + object-cover sehingga
+  // ukuran asli foto (mis. potret 900×1600) tidak pernah ikut menentukan tinggi kisi.
+  const tile = 'relative block h-full min-h-0 w-full min-w-0 overflow-hidden bg-[#dce4e4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand';
+  const img = 'absolute inset-0 h-full w-full object-cover';
   return (
-    <div className={`relative z-10 grid h-[132px] grid-cols-[2fr_1fr] gap-1 ${className}`}>
-      <PhotoButton onOpen={() => g.open(0)} label={`Lihat foto bus ${trip.poName}`} className={`${tile} row-span-2 rounded-xl`}>
-        <img src={at(0)} alt="" loading="lazy" className="h-full w-full object-cover transition duration-300 hover:scale-105" />
+    <div className={`relative z-10 grid h-[132px] shrink-0 grid-cols-[minmax(0,2fr)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] gap-1 overflow-hidden rounded-xl ${className}`}>
+      <PhotoButton onOpen={() => g.open(0)} label={`Lihat foto bus ${trip.poName}`} className={`${tile} rounded-xl`}>
+        <img src={at(0)} alt="" loading="lazy" className={`${img} transition duration-300 hover:scale-105`} />
       </PhotoButton>
-      <div className="grid grid-rows-2 gap-1">
+      <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-1">
         <PhotoButton onOpen={() => g.open(1)} label="Foto berikutnya" className={`${tile} rounded-[10px]`}>
-          <img src={at(1)} alt="" loading="lazy" className="h-full w-full object-cover transition duration-300 hover:scale-105" />
+          <img src={at(1)} alt="" loading="lazy" className={`${img} transition duration-300 hover:scale-105`} />
         </PhotoButton>
         <PhotoButton onOpen={() => g.open(2)} label={`Lihat semua ${n} foto`} className={`${tile} rounded-[10px] bg-ink`}>
-          <img src={at(2)} alt="" loading="lazy" className="h-full w-full object-cover opacity-45" />
+          <img src={at(2)} alt="" loading="lazy" className={`${img} opacity-45`} />
           <span className="absolute inset-0 flex items-center justify-center gap-1 text-xs font-extrabold text-white">
             <CameraIcon /> {n} foto
           </span>
