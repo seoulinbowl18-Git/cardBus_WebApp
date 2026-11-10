@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNo
 import { BusPhoto } from '@/components/bus-photo';
 import { FacilityChips } from '@/components/facility-chips';
 import { TripStops } from '@/components/trip-stops';
+import { PhotoCountBadge } from '@/components/bus-gallery';
 import { SeatLayoutMap } from '@/components/seat-layout-map';
 import { SeatPicker } from '@/components/seat-picker';
 import { VoucherPicker } from '@/components/voucher-picker';
@@ -239,6 +240,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
           <div className="relative">
             <BusPhoto src={trip.image} alt={trip.poName} className="h-36 w-full sm:h-44" />
             <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(4,46,49,0.85)_0%,rgba(4,46,49,0)_70%)]" />
+            <PhotoCountBadge trip={trip} className="absolute right-3 top-3 z-10" />
             <div className="absolute inset-x-0 bottom-0 flex items-end gap-3 p-4 text-white">
               <PoBadge name={trip.poName} logo={trip.logo} size={44} />
               <div className="min-w-0 flex-1">

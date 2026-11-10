@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { BusPhotoGrid } from '@/components/bus-gallery';
 import { BusPhoto } from '@/components/bus-photo';
 import { PoBadge } from '@/components/ui/po-badge';
 import { formatDuration, formatRupiah } from '@/lib/format';
@@ -7,14 +9,26 @@ export const cheapestTier = (trip: Trip) =>
   trip.tiers.filter((t) => t.freeSeats.length > 0).sort((a, b) => a.price - b.price)[0] ?? trip.tiers[0];
 export const seatsLeft = (trip: Trip) => trip.tiers.reduce((n, t) => n + t.freeSeats.length, 0);
 
-/** Kartu jadwal di hasil pencarian, mengikuti TripCardWidget di aplikasi mobile. */
-export function TripCard({ trip }: { trip: Trip }) {
+/**
+ * Kartu jadwal di hasil pencarian, mengikuti TripCardWidget di aplikasi mobile. `href` = seluruh kartu jadi
+ * tautan ke checkout (tautan di lapisan bawah, agar kisi foto galeri tetap bisa diklik sendiri).
+ */
+export function TripCard({ trip, href }: { trip: Trip; href?: string }) {
   const tier = cheapestTier(trip);
   const left = seatsLeft(trip);
   const promo = !!tier?.oldPrice;
+  const hasGallery = (trip.photos?.length ?? 0) > 0 || trip.photosPending;
   return (
-    <article className={`flex gap-4 rounded-2xl border border-line bg-white p-3.5 ${left === 0 ? 'opacity-60' : ''}`}>
-      <BusPhoto src={trip.image} alt={trip.poName} className="hidden h-auto w-40 shrink-0 rounded-xl sm:block" />
+    <article
+      className={`relative flex flex-col gap-3 rounded-2xl border border-line bg-white p-3.5 sm:flex-row sm:gap-4 ${left === 0 ? 'opacity-60' : ''} ${href ? 'transition hover:-translate-y-0.5 hover:shadow-md' : ''}`}
+    >
+      {href && <Link href={href} aria-label={`Pilih jadwal PO ${trip.poName} ${trip.busClass} ${trip.depart}`} className="absolute inset-0 rounded-2xl" />}
+      {hasGallery ? (
+        // Galeri foto armada: di bawah info jadwal (HP), di kiri (layar lebar)
+        <BusPhotoGrid trip={trip} className="order-last sm:order-first sm:w-56 sm:shrink-0" />
+      ) : (
+        <BusPhoto src={trip.image} alt={trip.poName} className="hidden h-auto w-40 shrink-0 rounded-xl sm:block" />
+      )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2.5">
           <PoBadge name={trip.poName} logo={trip.logo} />

@@ -71,6 +71,17 @@ export interface Trip {
   seatType?: string | null;
   /** Denah per lantai (format prototipe CardBus). Kosong di backend versi lama. */
   layout?: SeatDeck[];
+  /** Galeri foto armada (unggahan Admin Pusat / bawaan), urut tampil */
+  photos?: TripPhoto[];
+  /** true = foto armada belum ada ("Foto armada segera hadir") */
+  photosPending?: boolean;
+}
+
+/** Satu foto galeri armada; cat = kategori (Eksterior, Interior, Kursi, …). */
+export interface TripPhoto {
+  src: string;
+  cat?: string;
+  caption?: string;
 }
 
 /** Satu perhentian; minutes = menit sejak perhentian pertama. */
