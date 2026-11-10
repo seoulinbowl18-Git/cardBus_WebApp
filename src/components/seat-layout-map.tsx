@@ -20,11 +20,16 @@ const SEAT_W = 40; // lebar kursi standar (px); lebar lain dari data `w` prototi
 const isSeat = (c: SeatCell): c is Extract<SeatCell, { code: string }> => 'code' in c;
 const isAisle = (c: SeatCell): c is Extract<SeatCell, { aisle: true }> => 'aisle' in c;
 const isSection = (c: SeatCell): c is Extract<SeatCell, { section: string }> => 'section' in c;
+const isColHead = (c: SeatCell): c is Extract<SeatCell, { kind: 'col' }> => 'kind' in c && c.kind === 'col';
+type Facility = 'toilet' | 'door' | 'stairs';
+const isFacility = (c: SeatCell): c is { kind: Facility; w?: number } =>
+  'kind' in c && (c.kind === 'toilet' || c.kind === 'door' || c.kind === 'stairs');
 
 /**
  * Denah kursi per lantai (format prototipe CardBus, padanan SeatLayoutMap di mobile):
  * tab Lantai Bawah / Atas, kepala denah (pintu · nama · sopir), judul bagian + harga,
- * kursi 2-2 / 2-1 / Grand Captain, dan sleeper. Kursi varian lain tampil samar.
+ * kursi 2-2 / 2-1 / Grand Captain, dan sleeper. Kursi varian lain tampil samar. Denah dari template Admin Pusat
+ * juga membawa kepala kolom (A B | C), nomor baris, dan penanda toilet / pintu / tangga selebar kursi.
  */
 export function SeatLayoutMap({ layout, tiers, tierKey, selected, max, onToggle, onTierChange }: Props) {
   const free = useMemo(() => new Set(tiers.flatMap((t) => t.freeSeats)), [tiers]);
@@ -102,6 +107,7 @@ export function SeatLayoutMap({ layout, tiers, tierKey, selected, max, onToggle,
           <hr className="my-3 border-line" />
           <div className="space-y-2">
             {deck.rows.map((row, ri) => {
+              const labels = deck.rowLabels;
               const head = row.length === 1 && isSection(row[0]) ? row[0] : null;
               if (head) {
                 const keys = head.tiers ?? (head.tier ? [head.tier] : []);
@@ -115,10 +121,16 @@ export function SeatLayoutMap({ layout, tiers, tierKey, selected, max, onToggle,
                 );
               }
               return (
-                <div key={ri} className="flex justify-center gap-1.5">
+                <div key={ri} className="flex items-center justify-center gap-1.5">
+                  {labels && <span className="w-5 shrink-0 text-right text-[11px] font-bold text-faint" aria-hidden>{labels[ri] ?? ''}</span>}
                   {row.map((c, ci) => {
                     if (isAisle(c)) return <span key={ci} style={{ width: c.w ?? 20 }} className="shrink-0" aria-hidden />;
-                    if (!isSeat(c)) return null;
+                    if (isColHead(c)) {
+                      return <span key={ci} style={{ width: c.w ?? SEAT_W }} className="shrink-0 text-center text-[11px] font-bold text-faint" aria-hidden>{c.text}</span>;
+                    }
+                    if (isFacility(c)) return <FacilityCell key={ci} kind={c.kind} width={c.w ?? SEAT_W} />;
+                    // Posisi kosong (denah template) selebar kursi agar kolom sejajar
+                    if (!isSeat(c)) return <span key={ci} style={{ width: (c as { w?: number }).w ?? SEAT_W }} className="shrink-0" aria-hidden />;
                     return (
                       <SeatButton
                         key={c.code}
@@ -132,6 +144,7 @@ export function SeatLayoutMap({ layout, tiers, tierKey, selected, max, onToggle,
                       />
                     );
                   })}
+                  {labels && <span className="w-5 shrink-0" aria-hidden />}
                 </div>
               );
             })}
@@ -182,6 +195,31 @@ function SeatButton(props: {
       {bed && <span className={`absolute inset-x-1.5 top-1.5 h-2 rounded ${picked ? 'bg-white/40' : 'bg-current opacity-20'}`} aria-hidden />}
       <span className={bed ? 'absolute inset-x-0 bottom-2' : ''}>{cell.code}</span>
     </button>
+  );
+}
+
+const FACILITY: Record<Facility, { label: string; path: string }> = {
+  toilet: { label: 'Toilet', path: 'M7 4h10v6a5 5 0 0 1-10 0zM9 15v5h6v-5M5 10h14' },
+  door: { label: 'Pintu', path: 'M6 21V4h10v17M4 21h14M13 12h.01' },
+  stairs: { label: 'Tangga', path: 'M4 20h4v-4h4v-4h4V8h4' },
+};
+
+/** Penanda fasilitas di denah (toilet / pintu / tangga), selebar kursi agar kolom tetap sejajar. */
+export function FacilityCell({ kind, width, className = '' }: { kind: Facility; width: number; className?: string }) {
+  const f = FACILITY[kind];
+  return (
+    <span
+      role="img"
+      aria-label={f.label}
+      title={f.label}
+      style={{ width }}
+      className={`flex h-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] border border-dashed border-line bg-[#f4f7f7] text-faint ${className}`}
+    >
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d={f.path} />
+      </svg>
+      <span className="text-[9px] font-bold leading-none">{f.label}</span>
+    </span>
   );
 }
 

@@ -92,11 +92,16 @@ export interface TripStopPoint {
   type: 'board' | 'rest' | 'drop' | string;
 }
 
-/** Satu sel denah: kursi / sleeper, lorong, atau judul bagian (satu baris sendiri). */
+/**
+ * Satu sel denah: kursi / sleeper, lorong, judul bagian (satu baris sendiri), kepala kolom ("A"),
+ * atau penanda fasilitas (toilet / pintu / tangga) dan posisi kosong — keduanya selebar kursi agar sejajar.
+ */
 export type SeatCell =
   | { code: string; kind: 'seat' | 'bed'; tier: string; w?: number }
   | { aisle: true; w?: number }
-  | { section: string; tier?: string; tiers?: string[] };
+  | { section: string; tier?: string; tiers?: string[] }
+  | { kind: 'col'; text: string; w?: number }
+  | { kind: 'toilet' | 'door' | 'stairs' | 'empty'; w?: number };
 
 export interface SeatDeck {
   key: string;
@@ -105,6 +110,8 @@ export interface SeatDeck {
   door?: string;
   driver?: string;
   rows: SeatCell[][];
+  /** Nomor baris sejajar `rows` (null = judul / kepala kolom / baris fasilitas). Denah dari template saja. */
+  rowLabels?: (string | null)[] | null;
 }
 
 export interface TripSearchQuery {

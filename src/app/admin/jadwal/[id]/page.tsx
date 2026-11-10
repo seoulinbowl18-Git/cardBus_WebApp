@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
 import { ImagePicker, PhotoGallery } from '@/components/admin/image-input';
+import { SeatPlanEditor } from '@/components/admin/seat-plan-editor';
 import { StopsEditor } from '@/components/admin/stops-editor';
 import { Card, ErrorBox, Field, StatusPill, btnDanger, btnPrimary, btnSecondary, inputCls } from '@/components/admin/ui';
 import { ApiError } from '@/lib/api/client';
@@ -13,8 +14,9 @@ import {
   type TripRoute, type TripStatus, type TripStop, type TripTier,
 } from '@/lib/api/admin';
 import { formatDuration, formatRupiah } from '@/lib/format';
+import { buildLayout, type SeatPlan, type SeatTemplate } from '@/lib/seat-plan';
 
-type Tab = 'jadwal' | 'rute' | 'perhentian' | 'harga' | 'foto';
+type Tab = 'jadwal' | 'rute' | 'perhentian' | 'denah' | 'harga' | 'foto';
 const PAGE = 60;
 
 interface Form {
@@ -37,6 +39,10 @@ interface Form {
   stops: TripStop[];
   /** Perhentian hanya dikirim bila diubah di tab Perhentian */
   stopsChanged: boolean;
+  /** Denah dari template kelas bus (null = denah data armada / nomor kursi manual) */
+  seatPlan: SeatPlan | null;
+  /** Denah hanya dikirim bila diubah di tab Denah Kursi */
+  planChanged: boolean;
 }
 
 const NEW_FORM: Form = {
@@ -50,6 +56,8 @@ const NEW_FORM: Form = {
   photosChanged: false,
   stops: [],
   stopsChanged: false,
+  seatPlan: null,
+  planChanged: false,
 };
 
 const fromDetail = (t: TripDetail): Form => ({
@@ -57,7 +65,19 @@ const fromDetail = (t: TripDetail): Form => ({
   facilities: t.facilities.join(', '), routes: t.routes, tiers: t.tiers, promos: t.promos, status: t.status,
   image: t.image && t.imageUrl ? { path: t.image, url: t.imageUrl } : null, photos: t.photos, photosChanged: false,
   stops: t.stops ?? [], stopsChanged: false,
+  seatPlan: t.seatPlan ?? null, planChanged: false,
 });
+
+/**
+ * Varian kursi mengikuti denah: nama & nomor kursi dari denah, harga dipertahankan per kode varian
+ * (varian baru memakai harga varian pertama sebagai awal).
+ */
+function tiersFromPlan(plan: SeatPlan, old: TripTier[]): TripTier[] | null {
+  const built = buildLayout(plan);
+  if (typeof built === 'string') return null;
+  const price = new Map(old.map((t) => [t.key, t.price]));
+  return built.tiers.map((t) => ({ key: t.key, name: t.name, price: price.get(t.key) ?? old[0]?.price ?? 0, seats: t.seats }));
+}
 
 const savedText = (status: TripStatus) =>
   status === 'live' ? 'Tersimpan dan tayang di aplikasi penumpang.' : 'Tersimpan. Jadwal belum tayang (draf).';
@@ -81,6 +101,7 @@ export default function TripEditorPage() {
   const [trip, setTrip] = useState<TripDetail | null>(null);
   const [form, setForm] = useState<Form | null>(isNew ? NEW_FORM : null);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [templates, setTemplates] = useState<SeatTemplate[]>([]);
   const [tab, setTab] = useState<Tab>('jadwal');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<{ message: string; issues?: string[] } | null>(null);
@@ -107,6 +128,7 @@ export default function TripEditorPage() {
   useEffect(load, [load]);
   useEffect(() => {
     adminApi.partners().then(setPartners).catch(() => {});
+    adminApi.seatTemplates().then(setTemplates).catch(() => {});
   }, []);
 
   const set = useCallback(<K extends keyof Form>(k: K, v: Form[K] | ((old: Form[K]) => Form[K])) => {
@@ -114,8 +136,32 @@ export default function TripEditorPage() {
     setForm((f) => (f ? { ...f, [k]: typeof v === 'function' ? (v as (o: Form[K]) => Form[K])(f[k]) : v } : f));
   }, []);
 
+  /** Denah diubah: varian kursi di tab Harga ikut disesuaikan */
+  const setPlan = useCallback((plan: SeatPlan | null) => {
+    setSaved(null);
+    setForm((f) => {
+      if (!f) return f;
+      const tiers = plan ? tiersFromPlan(plan, f.tiers) : null;
+      return {
+        ...f, seatPlan: plan, planChanged: true,
+        tiers: tiers ?? (plan ? f.tiers : f.tiers.map((t) => (f.seatPlan ? { ...t, seats: [] } : t))),
+      };
+    });
+  }, []);
+  const applyTemplate = useCallback((t: SeatTemplate) => {
+    setForm((f) => (f ? { ...f, seatType: t.seatType, busType: f.busType || t.busType } : f));
+  }, []);
+
   async function save() {
     if (!form) return;
+    if (form.planChanged && form.seatPlan) {
+      const problem = buildLayout(form.seatPlan);
+      if (typeof problem === 'string') {
+        setTab('denah');
+        setSaveError({ message: problem });
+        return;
+      }
+    }
     const stopError = form.stopsChanged ? stopsProblem(form.stops) : null;
     if (stopError) {
       setTab('perhentian');
@@ -133,6 +179,7 @@ export default function TripEditorPage() {
       routes: form.routes.filter((r) => r.from.trim() || r.to.trim() || r.viaStops),
       tiers: form.tiers, promos: form.promos,
       ...(form.stopsChanged && { stops: form.stops }),
+      ...(form.planChanged && { seatPlan: form.seatPlan }),
       // Status menunggu validasi / perlu koreksi dari aplikasi Mitra dibiarkan kecuali admin memilih Draf / Tayang.
       ...((form.status === 'draft' || form.status === 'live') && { status: form.status }),
       ...(form.photosChanged && {
@@ -176,7 +223,8 @@ export default function TripEditorPage() {
   if (!form) return <p className="py-10 text-center text-muted">Memuat…</p>;
 
   const po = partners.find((p) => p.id === form.poId);
-  const hasLayout = Boolean(trip?.hasLayout);
+  // Denah template di form, atau denah tersimpan (data armada) yang belum diganti / dihapus
+  const hasLayout = form.seatPlan ? true : form.planChanged ? false : Boolean(trip?.hasLayout);
 
   return (
     <div className="space-y-4">
@@ -196,7 +244,7 @@ export default function TripEditorPage() {
       </div>
 
       <div role="tablist" className="flex gap-1 border-b border-line">
-        {([['jadwal', 'Jadwal'], ['rute', `Rute (${form.routes.length})`], ['perhentian', `Perhentian (${form.stops.length})`], ['harga', 'Harga & Promo'], ['foto', `Foto (${form.photos.length})`]] as const).map(([k, label]) => (
+        {([['jadwal', 'Jadwal'], ['rute', `Rute (${form.routes.length})`], ['perhentian', `Perhentian (${form.stops.length})`], ['denah', `Denah Kursi${form.seatPlan ? ` (${form.seatPlan.decks.length} lantai)` : ''}`], ['harga', 'Harga & Promo'], ['foto', `Foto (${form.photos.length})`]] as const).map(([k, label]) => (
           <button
             key={k}
             role="tab"
@@ -209,7 +257,19 @@ export default function TripEditorPage() {
         ))}
       </div>
 
-      {tab === 'jadwal' && <ScheduleTab form={form} set={set} isNew={isNew} partners={partners} />}
+      {tab === 'jadwal' && (
+        <ScheduleTab
+          form={form}
+          set={set}
+          isNew={isNew}
+          partners={partners}
+          templates={templates}
+          onTemplate={(t) => {
+            setPlan(structuredClone(t.plan));
+            applyTemplate(t);
+          }}
+        />
+      )}
       {tab === 'rute' && <RoutesTab routes={form.routes} setRoutes={(f) => set('routes', f)} stopsChanged={form.stopsChanged} />}
       {tab === 'perhentian' && (
         <>
@@ -223,6 +283,15 @@ export default function TripEditorPage() {
           />
           {form.stopsChanged && <p className="text-xs font-semibold text-[#8a5a00]">Perubahan perhentian belum disimpan. Tekan Simpan; rute ikut diperbarui.</p>}
         </>
+      )}
+      {tab === 'denah' && (
+        <SeatPlanEditor
+          plan={form.seatPlan}
+          templates={templates}
+          legacyLayout={Boolean(trip?.hasLayout) && !trip?.seatPlan && !form.planChanged}
+          onChange={setPlan}
+          onTemplate={applyTemplate}
+        />
       )}
       {tab === 'harga' && <PricesTab form={form} set={set} hasLayout={hasLayout} />}
       {tab === 'foto' && (
@@ -300,8 +369,12 @@ export default function TripEditorPage() {
 
 type SetField = <K extends keyof Form>(k: K, v: Form[K] | ((old: Form[K]) => Form[K])) => void;
 
-function ScheduleTab({ form, set, isNew, partners }: { form: Form; set: SetField; isNew: boolean; partners: Partner[] }) {
+function ScheduleTab({ form, set, isNew, partners, templates, onTemplate }: {
+  form: Form; set: SetField; isNew: boolean; partners: Partner[];
+  templates: SeatTemplate[]; onTemplate: (t: SeatTemplate) => void;
+}) {
   const kuota = partners.filter((p) => p.level < 2);
+  const current = templates.find((t) => t.key === form.seatPlan?.template);
   return (
     <Card>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -324,6 +397,22 @@ function ScheduleTab({ form, set, isNew, partners }: { form: Form; set: SetField
         </Field>
         <Field label="Format kursi (opsional)">
           <input className={inputCls} value={form.seatType} onChange={(e) => set('seatType', e.target.value)} placeholder="2-1 · 21 kursi" />
+        </Field>
+        <Field
+          label="Tipe / kelas bus (template denah)"
+          hint={form.seatPlan ? 'Lantai, kelas, toilet / pintu / tangga diatur di tab Denah Kursi' : 'Denah kursi otomatis mengikuti tipe ini'}
+        >
+          <select
+            className={inputCls}
+            value={current?.key ?? ''}
+            onChange={(e) => {
+              const t = templates.find((x) => x.key === e.target.value);
+              if (t) onTemplate(t);
+            }}
+          >
+            <option value="">{form.seatPlan ? 'Denah kustom' : 'Pilih template…'}</option>
+            {templates.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+          </select>
         </Field>
         <Field label="Fasilitas" hint="Pisahkan dengan koma, mis. wifi, toilet, usb">
           <input className={inputCls} value={form.facilities} onChange={(e) => set('facilities', e.target.value)} />
