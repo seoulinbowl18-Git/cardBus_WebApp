@@ -106,6 +106,7 @@ export function createApiClient() {
     get: <T>(path: string, query?: Query, signal?: AbortSignal) => request<T>(session, 'GET', path, { query, signal }),
     post: <T>(path: string, body?: unknown) => request<T>(session, 'POST', path, { body: body ?? {} }),
     put: <T>(path: string, body?: unknown) => request<T>(session, 'PUT', path, { body: body ?? {} }),
+    patch: <T>(path: string, body?: unknown) => request<T>(session, 'PATCH', path, { body: body ?? {} }),
     del: <T>(path: string) => request<T>(session, 'DELETE', path),
     upload: <T>(path: string, file: Blob) => request<T>(session, 'POST', path, { file }),
   };
