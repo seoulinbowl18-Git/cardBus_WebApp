@@ -14,6 +14,7 @@ const NAV = [
   { href: '/admin/po', label: 'Mitra PO', match: (p: string) => p.startsWith('/admin/po') },
   { href: '/admin/unggulan', label: 'Produk Unggulan', match: (p: string) => p.startsWith('/admin/unggulan') },
   { href: '/admin/promo', label: 'Promo & Info', match: (p: string) => p.startsWith('/admin/promo') },
+  { href: '/admin/ulasan', label: 'Ulasan & Rating', match: (p: string) => p.startsWith('/admin/ulasan') },
 ];
 
 /**

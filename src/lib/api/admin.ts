@@ -375,6 +375,73 @@ export interface BannerInput {
   active: boolean;
 }
 
+/** Ulasan penumpang (rating & komentar) — moderasi di /admin/ulasan. */
+export type ReviewTag = 'staf' | 'nilai_uang' | 'penjemputan' | 'ketepatan' | 'kebersihan' | 'kenyamanan';
+export const REVIEW_TAGS: { key: ReviewTag; label: string }[] = [
+  { key: 'staf', label: 'Perilaku Staf' },
+  { key: 'nilai_uang', label: 'Nilai Uang' },
+  { key: 'penjemputan', label: 'Waktu Penjemputan' },
+  { key: 'ketepatan', label: 'Ketepatan Waktu' },
+  { key: 'kebersihan', label: 'Kebersihan' },
+  { key: 'kenyamanan', label: 'Kenyamanan Kursi' },
+];
+
+export interface RatingSummary {
+  /** Rata-rata gabungan (ulasan tayang + rating awal); null = belum ada penilaian */
+  average: number | null;
+  /** Total penilaian (ulasan tayang + rating awal) */
+  total: number;
+  /** Jumlah ulasan tayang saja */
+  reviewCount: number;
+  histogram: Record<1 | 2 | 3 | 4 | 5, number>;
+  base: { average: number; count: number; note: string | null } | null;
+}
+
+export interface PoRating {
+  poId: string;
+  name: string;
+  logo: string | null;
+  hiddenCount: number;
+  summary: RatingSummary;
+}
+
+export interface AdminReview {
+  id: string;
+  poId: string;
+  name: string;
+  rating: number;
+  comment: string;
+  photos: string[];
+  tags: ReviewTag[];
+  /** passenger = penumpang (pesanan terverifikasi) · admin = impor Admin Pusat */
+  source: 'passenger' | 'admin';
+  status: 'published' | 'hidden';
+  trip: { busClass: string; from: string | null; to: string | null; date: string | null } | null;
+  createdAt: string;
+  userId: string | null;
+  bookingId: string | null;
+}
+
+export interface ReviewQuery {
+  poId?: string;
+  status?: 'published' | 'hidden';
+  rating?: number;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ImportedReviewInput {
+  poId: string;
+  authorName: string;
+  rating: number;
+  comment: string;
+  tags: ReviewTag[];
+  photos: string[];
+  /** ISO; kosong = sekarang */
+  createdAt?: string;
+}
+
 export const adminApi = {
   sendOtp: (phone: string) => adminClient.post<SendOtpResponse>('/api/auth/send-otp', { phone }),
   /** scope 'admin': backend menolak nomor yang bukan admin dan tidak membuat akun baru. */
@@ -410,6 +477,16 @@ export const adminApi = {
   uploadImage: (file: Blob) => adminClient.upload<StoredImage & { id: string; size: number }>('/api/admin/media', file),
 
   stats: (days: number) => adminClient.get<Stats>('/api/admin/stats', { days }),
+
+  reviewSummary: () => adminClient.get<PoRating[]>('/api/admin/reviews/summary'),
+  reviews: (q: ReviewQuery = {}) => adminClient.get<{ total: number; items: AdminReview[] }>('/api/admin/reviews', { ...q }),
+  importReview: (r: ImportedReviewInput) => adminClient.post<AdminReview>('/api/admin/reviews', r),
+  setReviewStatus: (id: string, status: 'published' | 'hidden') =>
+    adminClient.patch<AdminReview>(`/api/admin/reviews/${encodeURIComponent(id)}`, { status }),
+  deleteReview: (id: string) => adminClient.del<{ deleted: true }>(`/api/admin/reviews/${encodeURIComponent(id)}`),
+  /** Rating awal PO (null = hapus); digabung ke rata-rata & total di aplikasi penumpang. */
+  setBaseRating: (poId: string, b: { baseAverage: number | null; baseCount: number; note: string | null }) =>
+    adminClient.put<{ poId: string; name: string; summary: RatingSummary }>(`/api/admin/partners/${encodeURIComponent(poId)}/rating`, b),
 };
 
 export const TRIP_STATUS: Record<TripStatus, { label: string; cls: string }> = {
