@@ -75,6 +75,16 @@ export interface Trip {
   photos?: TripPhoto[];
   /** true = foto armada belum ada ("Foto armada segera hadir") */
   photosPending?: boolean;
+  /** Rating PO (rata-rata & jumlah penilaian dari ulasan + rating awal). null = PO belum punya penilaian. */
+  rating?: TripRating | null;
+  /** Bentuk datar (cadangan bila backend mengirim kolom PO apa adanya). */
+  average_rating?: number | string | null;
+  total_reviews?: number | null;
+}
+
+export interface TripRating {
+  average: number;
+  total: number;
 }
 
 /** Satu foto galeri armada; cat = kategori (Eksterior, Interior, Kursi, …). */

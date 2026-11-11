@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { BusPhotoGrid } from '@/components/bus-gallery';
 import { BusPhoto } from '@/components/bus-photo';
 import { PoBadge } from '@/components/ui/po-badge';
+import { RatingBadge, tripRating } from '@/components/ui/rating-badge';
 import { formatDuration, formatRupiah } from '@/lib/format';
 import type { Trip } from '@/lib/types';
 
@@ -18,6 +19,7 @@ export function TripCard({ trip, href }: { trip: Trip; href?: string }) {
   const left = seatsLeft(trip);
   const promo = !!tier?.oldPrice;
   const hasGallery = (trip.photos?.length ?? 0) > 0 || trip.photosPending;
+  const rating = tripRating(trip);
   return (
     <article
       className={`relative flex flex-col gap-3 rounded-2xl border border-line bg-white p-3.5 sm:flex-row sm:gap-4 ${left === 0 ? 'opacity-60' : ''} ${href ? 'transition hover:-translate-y-0.5 hover:shadow-md' : ''}`}
@@ -33,7 +35,11 @@ export function TripCard({ trip, href }: { trip: Trip; href?: string }) {
         <div className="flex items-center gap-2.5">
           <PoBadge name={trip.poName} logo={trip.logo} />
           <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-2 break-words text-[15px] font-extrabold leading-tight">PO {trip.poName}</h3>
+            <div className="flex items-start gap-2">
+              <h3 className="line-clamp-2 min-w-0 break-words text-[15px] font-extrabold leading-tight">PO {trip.poName}</h3>
+              {/* Rating PO (ulasan penumpang + rating awal dari Admin Pusat), seperti di aplikasi mobile */}
+              {rating && <RatingBadge rating={rating} />}
+            </div>
             <p className="truncate text-xs text-muted">{trip.busClass}</p>
           </div>
           {tier && (
