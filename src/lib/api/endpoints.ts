@@ -2,6 +2,8 @@ import { api } from './client';
 import type {
   CreateOrderBody,
   Locations,
+  ReviewPage,
+  ReviewQuery,
   ReferralInfo,
   UserVoucher,
   VoucherTab,
@@ -30,6 +32,22 @@ export const userApi = {
 
 export const tripApi = {
   search: (q: TripSearchQuery, signal?: AbortSignal) => api.get<Trip[]>('/api/trips', { ...q }, signal),
+};
+
+/** Rating & ulasan PO (publik, tanpa login). */
+export const reviewApi = {
+  list: (poId: string, q: ReviewQuery = {}, signal?: AbortSignal) =>
+    api.get<ReviewPage>(
+      '/api/reviews',
+      {
+        poId,
+        ...(q.rating && { rating: String(q.rating) }),
+        ...(q.tag && { tag: q.tag }),
+        ...(q.photos && { photos: '1' }),
+        ...(q.before && { before: q.before }),
+      },
+      signal,
+    ),
 };
 
 export const locationApi = {

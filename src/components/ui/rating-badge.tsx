@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Trip, TripRating } from '@/lib/types';
 
 /** Rating PO dari jadwal: `rating: { average, total }`, atau kolom datar average_rating / total_reviews. */
@@ -24,15 +25,12 @@ export function compactCount(n: number): string {
 const color = (v: number) => (v >= 4 ? 'bg-[#1f8a4c]' : v >= 3 ? 'bg-[#e08a00]' : 'bg-[#d64545]');
 
 /** Kotak rating "★ 4.7" dengan jumlah penilaian di bawahnya, seperti RatingBadge di aplikasi Flutter. */
-export function RatingBadge({ rating, className = '' }: { rating: TripRating; className?: string }) {
+/** `href` = badge jadi tautan ke halaman ulasan PO. */
+export function RatingBadge({ rating, href, className = '' }: { rating: TripRating; href?: string; className?: string }) {
   const avg = rating.average.toFixed(1);
-  return (
-    <div
-      className={`flex shrink-0 flex-col items-center gap-0.5 ${className}`}
-      role="img"
-      aria-label={`Rating ${avg} dari 5, ${rating.total} penilaian`}
-      title={`Rating ${avg} dari ${rating.total} penilaian`}
-    >
+  const label = `Rating ${avg} dari 5, ${rating.total} penilaian`;
+  const body = (
+    <>
       <span className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-extrabold leading-none text-white ${color(rating.average)}`}>
         <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden>
           <path d="m12 17.3-6.2 3.7 1.6-7L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.4 4.8 1.6 7z" />
@@ -45,6 +43,17 @@ export function RatingBadge({ rating, className = '' }: { rating: TripRating; cl
         </svg>
         {compactCount(rating.total)}
       </span>
+    </>
+  );
+  const cls = `flex shrink-0 flex-col items-center gap-0.5 ${className}`;
+  return href ? (
+    // relative z-10: di atas tautan checkout yang menutupi seluruh kartu jadwal
+    <Link href={href} aria-label={`${label}. Lihat ulasan`} title="Lihat ulasan" className={`${cls} relative z-10 rounded-md hover:opacity-85`}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls} role="img" aria-label={label} title={label}>
+      {body}
     </div>
   );
 }

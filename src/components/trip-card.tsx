@@ -38,7 +38,7 @@ export function TripCard({ trip, href }: { trip: Trip; href?: string }) {
             <div className="flex items-start gap-2">
               <h3 className="line-clamp-2 min-w-0 break-words text-[15px] font-extrabold leading-tight">PO {trip.poName}</h3>
               {/* Rating PO (ulasan penumpang + rating awal dari Admin Pusat), seperti di aplikasi mobile */}
-              {rating && <RatingBadge rating={rating} />}
+              {rating && <RatingBadge rating={rating} href={`/ulasan/${encodeURIComponent(trip.poId)}`} />}
             </div>
             <p className="truncate text-xs text-muted">{trip.busClass}</p>
           </div>

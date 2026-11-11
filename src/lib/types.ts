@@ -249,3 +249,51 @@ export interface UserVoucher {
   expiresAt: string | null;
   usedAt: string | null;
 }
+
+/** Kategori ulasan (sama dengan backend services/reviews.js). */
+export type ReviewTag = 'staf' | 'nilai_uang' | 'penjemputan' | 'ketepatan' | 'kebersihan' | 'kenyamanan';
+
+export interface ReviewSummary {
+  /** Rata-rata gabungan (ulasan + rating awal PO); null = belum ada penilaian. */
+  average: number | null;
+  /** Jumlah penilaian (ulasan + rating awal). */
+  total: number;
+  /** Jumlah ulasan penumpang yang tayang (dasar persentase histogram). */
+  reviewCount: number;
+  histogram: Record<'1' | '2' | '3' | '4' | '5', number>;
+  base: { average: number; count: number; note: string | null } | null;
+}
+
+export interface Review {
+  id: string;
+  poId: string;
+  /** Nama publik, mis. "Wahyu S." */
+  name: string;
+  rating: number;
+  comment: string;
+  photos: string[];
+  tags: ReviewTag[];
+  /** passenger = penumpang CardBus; admin = dicatat Admin Pusat dari luar aplikasi (loket / survei). */
+  source: 'passenger' | 'admin';
+  trip: { busClass: string; from: string | null; to: string | null; date: string | null } | null;
+  createdAt: string;
+}
+
+/** GET /api/reviews?poId=… */
+export interface ReviewPage {
+  poId: string;
+  poName: string;
+  logo?: string | null;
+  summary: ReviewSummary;
+  tags: { key: ReviewTag; label: string; count: number }[];
+  photos: { src: string; reviewId: string }[];
+  items: Review[];
+  nextBefore: string | null;
+}
+
+export interface ReviewQuery {
+  rating?: number;
+  tag?: ReviewTag;
+  photos?: boolean;
+  before?: string;
+}
