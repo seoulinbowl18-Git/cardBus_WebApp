@@ -114,7 +114,7 @@ export function createApiClient() {
 
 const passenger = createApiClient();
 
-export const api = { get: passenger.get, post: passenger.post, put: passenger.put };
+export const api = { get: passenger.get, post: passenger.post, put: passenger.put, upload: passenger.upload };
 /** Dipanggil AuthProvider saat login / logout. */
 export const setAuthToken = passenger.setToken;
 /** Callback saat backend membalas 401 (token kedaluwarsa) agar sesi dibersihkan. */

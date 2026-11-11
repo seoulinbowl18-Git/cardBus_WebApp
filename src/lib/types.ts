@@ -218,6 +218,12 @@ export interface Order {
     paymentUrl: string | null;
     expiredAt: string | null;
   };
+  /** ID PO (untuk tautan halaman ulasan). Backend lama belum mengirim. */
+  poId?: string | null;
+  /** Sudah diulas penumpang ini. */
+  reviewed?: boolean;
+  /** Boleh diulas: lunas, perjalanan selesai (e-tiket dipakai / hangus), belum diulas. */
+  canReview?: boolean;
 }
 
 export interface UpdateProfileBody {
@@ -296,4 +302,14 @@ export interface ReviewQuery {
   tag?: ReviewTag;
   photos?: boolean;
   before?: string;
+}
+
+/** POST /api/reviews */
+export interface NewReviewBody {
+  bookingId: string;
+  rating: number;
+  comment: string;
+  tags: ReviewTag[];
+  /** Path foto hasil POST /api/reviews/photos (/media/…) */
+  photos: string[];
 }

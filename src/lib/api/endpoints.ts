@@ -2,6 +2,8 @@ import { api } from './client';
 import type {
   CreateOrderBody,
   Locations,
+  NewReviewBody,
+  Review,
   ReviewPage,
   ReviewQuery,
   ReferralInfo,
@@ -48,6 +50,10 @@ export const reviewApi = {
       },
       signal,
     ),
+  /** Unggah satu foto ulasan (JPG/PNG/WebP, maks. 2 MB; perlu login) → path untuk `submit`. */
+  uploadPhoto: (file: Blob) => api.upload<{ path: string; url: string }>('/api/reviews/photos', file),
+  /** Kirim ulasan untuk pesanan sendiri yang sudah selesai perjalanannya (sekali per pesanan). */
+  submit: (body: NewReviewBody) => api.post<Review>('/api/reviews', body),
 };
 
 export const locationApi = {

@@ -5,16 +5,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { PoBadge } from '@/components/ui/po-badge';
 import { ApiError } from '@/lib/api/client';
 import { reviewApi } from '@/lib/api/endpoints';
-import type { Review, ReviewPage, ReviewQuery, ReviewTag } from '@/lib/types';
+import { reviewTagLabel } from '@/lib/reviews';
+import type { Review, ReviewPage, ReviewQuery } from '@/lib/types';
 
-const TAG_LABEL: Record<ReviewTag, string> = {
-  staf: 'Perilaku Staf',
-  nilai_uang: 'Nilai Uang',
-  penjemputan: 'Waktu Penjemputan',
-  ketepatan: 'Ketepatan Waktu',
-  kebersihan: 'Kebersihan',
-  kenyamanan: 'Kenyamanan Kursi',
-};
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 const fmtDate = (iso: string) => {
   const d = new Date(iso);
@@ -282,7 +275,7 @@ function ReviewItem({ review: r, onPhoto }: { review: Review; onPhoto: (i: numbe
         <div className="mt-2 flex flex-wrap gap-1.5">
           {r.tags.map((t) => (
             <span key={t} className="rounded-full bg-teal-soft px-2.5 py-0.5 text-[11.5px] font-bold text-brand-dark">
-              {TAG_LABEL[t] ?? t}
+              {reviewTagLabel(t)}
             </span>
           ))}
         </div>

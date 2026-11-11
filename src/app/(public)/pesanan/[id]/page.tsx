@@ -5,6 +5,7 @@ import { use, useEffect, useState, type ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Icon } from '@/components/icons';
 import { RequireAuth } from '@/components/require-auth';
+import { ReviewAction } from '@/components/review-dialog';
 import { ApiError } from '@/lib/api/client';
 import { orderApi } from '@/lib/api/endpoints';
 import { config } from '@/lib/config';
@@ -20,6 +21,7 @@ const groupDigits = (s: string) => s.replace(/(.{4})(?=.)/g, '$1 ');
 function OrderDetail({ id }: { id: string }) {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reload, setReload] = useState(0); // naik setelah ulasan terkirim → ambil ulang pesanan
 
   useEffect(() => {
     let stop = false;
@@ -42,11 +44,20 @@ function OrderDetail({ id }: { id: string }) {
       stop = true;
       clearTimeout(timer);
     };
-  }, [id]);
+  }, [id, reload]);
 
   if (!order) return error ? <p className="rounded-xl bg-red-50 p-4 text-red-700">{error}</p> : <p className="py-10 text-center text-muted">Memuat…</p>;
   if (order.status === 'pending') return <Payment order={order} />;
-  if (order.status === 'paid') return <ETicket order={order} />;
+  if (order.status === 'paid')
+    return (
+      <ETicket
+        order={order}
+        onReviewed={() => {
+          setOrder({ ...order, reviewed: true, canReview: false });
+          setReload((n) => n + 1);
+        }}
+      />
+    );
   return <Closed order={order} />;
 }
 
@@ -126,8 +137,8 @@ function Payment({ order: o }: { order: Order }) {
 }
 
 /** E-tiket setelah lunas (TicketScreen mobile). */
-function ETicket({ order: o }: { order: Order }) {
-  const { openCsHelp } = useUi();
+function ETicket({ order: o, onReviewed }: { order: Order; onReviewed: () => void }) {
+  const { openCsHelp, toast } = useUi();
   const active = o.ticketStatus === 'active';
   return (
     <div className="mx-auto max-w-lg space-y-4">
@@ -164,6 +175,17 @@ function ETicket({ order: o }: { order: Order }) {
           </dl>
         </div>
       </div>
+      {(o.canReview || o.reviewed) && (
+        <div className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4">
+          <div className="min-w-0 flex-1">
+            <p className="font-extrabold">{o.reviewed ? 'Terima kasih atas ulasanmu!' : 'Bagaimana perjalananmu?'}</p>
+            <p className="text-xs text-muted">
+              {o.reviewed ? 'Ulasanmu membantu penumpang lain memilih bus.' : `Beri rating & ulasan untuk PO ${o.poName ?? ''}.`}
+            </p>
+          </div>
+          <ReviewAction order={o} onReviewed={onReviewed} onToast={toast} className="shrink-0" />
+        </div>
+      )}
       {active && <p className="text-center text-muted">Tunjukkan QR ini ke kru / agen saat naik bus. Datang paling lambat 30 menit sebelum berangkat.</p>}
       <div className="grid gap-2 sm:grid-cols-2">
         <Link href="/" className="rounded-xl border border-brand py-3 text-center font-bold text-brand hover:bg-teal-soft">Kembali ke beranda</Link>

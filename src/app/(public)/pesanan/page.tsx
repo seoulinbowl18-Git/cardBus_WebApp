@@ -4,17 +4,25 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Icon } from '@/components/icons';
 import { RequireAuth } from '@/components/require-auth';
+import { ReviewAction } from '@/components/review-dialog';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ApiError } from '@/lib/api/client';
 import { orderApi } from '@/lib/api/endpoints';
 import { csWhatsappUrl } from '@/lib/cs';
 import { formatRupiah, shortDate } from '@/lib/format';
 import type { Order } from '@/lib/types';
+import { useUi } from '@/providers/ui-provider';
 
 /** Tiket Saya, mengikuti OrdersScreen di aplikasi mobile. */
 function OrderList() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useUi();
+  /** Setelah ulasan terkirim: tandai langsung, lalu ambil ulang dari server agar sesuai data tersimpan. */
+  const markReviewed = (id: string) => {
+    setOrders((list) => list && list.map((o) => (o.id === id ? { ...o, reviewed: true, canReview: false } : o)));
+    orderApi.list().then(setOrders).catch(() => {});
+  };
 
   useEffect(() => {
     orderApi
@@ -54,6 +62,7 @@ function OrderList() {
             <div className="flex items-center gap-1 border-t border-line px-3.5 py-2">
               <span className="text-sm font-extrabold">Kode {o.code}</span>
               <span className="flex-1" />
+              <ReviewAction order={o} onReviewed={() => markReviewed(o.id)} onToast={toast} />
               {o.ticketStatus === 'active' && (
                 <a
                   href={csWhatsappUrl(`Halo CS CardBus, saya ingin membatalkan tiket dengan kode ${o.code}`)}
