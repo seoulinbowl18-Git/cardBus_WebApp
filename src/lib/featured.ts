@@ -18,7 +18,8 @@ export async function loadFeatured(): Promise<FeaturedProduct[]> {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data: unknown = await res.json();
     if (!Array.isArray(data)) throw new Error('bukan daftar');
-    return data as FeaturedProduct[];
+    // Abaikan butir yang bukan objek (null, teks, dll.) agar satu data rusak tidak menjatuhkan beranda.
+    return data.filter((d): d is FeaturedProduct => typeof d === 'object' && d !== null && !Array.isArray(d));
   } catch (e) {
     console.error('[beranda] gagal memuat produk unggulan, pakai daftar cadangan:', (e as Error).message);
     return FEATURED;
