@@ -33,7 +33,7 @@ export function AppBanner() {
         <div className="relative z-10 px-5 pb-2 pt-6 sm:px-8 sm:pt-8 md:min-h-[240px] md:w-[52%] lg:min-h-0 lg:w-[40%] lg:pb-8 lg:pr-0">
           <div className="flex items-center gap-2.5">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/15 p-1 ring-1 ring-white/25 backdrop-blur-sm">
-              <Image src="/icons/icon-192.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
+              <Image src="/icon.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
             </span>
             <span className="text-2xl font-extrabold tracking-tight">
               Card<span className="text-gold">Bus</span>
