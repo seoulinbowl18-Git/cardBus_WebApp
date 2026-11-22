@@ -143,8 +143,11 @@ export interface LocationPoint {
   board: boolean;
   drop: boolean;
   routes: number;
-  /** false = titik kurasi (src/data/pickup-points.json) yang belum dipakai jadwal aktif mana pun. */
-  scheduled?: boolean;
+  /**
+   * Arah yang ditambahkan data kurasi (src/data/pickup-points.json) tetapi belum dipakai jadwal aktif:
+   * ['board'] = belum ada jadwal yang naik di titik ini, ['drop'] = belum ada yang turun di sini.
+   */
+  unscheduled?: ('board' | 'drop')[];
 }
 
 export interface Locations {

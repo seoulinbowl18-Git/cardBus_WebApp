@@ -33,9 +33,14 @@ interface CuratedData {
 }
 
 /**
- * Gabungkan titik kurasi ke data lokasi tanpa duplikat. Titik yang sudah ada (nama sama di kota yang
- * sama, tidak peka huruf besar/kecil) tetap memakai data jadwal dari backend (board/drop/routes); hanya
- * label wilayahnya yang memakai versi kurasi (mis. "Yogyakarta", bukan "Yogyakarta (Jogja)"). Titik baru ditambahkan di akhir daftar kotanya dengan routes 0 dan scheduled=false.
+ * Gabungkan titik kurasi ke data lokasi tanpa duplikat (nama sama di kota yang sama, tidak peka huruf
+ * besar/kecil). Untuk titik yang sudah ada dari backend:
+ * - data jadwal (routes) tetap dari backend;
+ * - arah naik/turun DIGABUNG: arah yang hanya ada di data kurasi ikut diaktifkan tetapi dicatat di
+ *   `unscheduled` (mis. backend punya Terminal Jombor hanya sebagai titik turun → di pemilih titik naik
+ *   tetap muncul dengan label "Belum ada jadwal");
+ * - label wilayah memakai versi kurasi (mis. "Yogyakarta", bukan "Yogyakarta (Jogja)").
+ * Titik baru ditambahkan di akhir daftar kotanya dengan routes 0 dan semua arahnya `unscheduled`.
  * Kota baru ditambahkan bila belum ada; alias kota digabung untuk pencarian.
  */
 export function withCurated(base: Locations, curated: CuratedData = CURATED as CuratedData): Locations {
@@ -53,11 +58,20 @@ export function withCurated(base: Locations, curated: CuratedData = CURATED as C
       const key = `${norm(city.name)}|${norm(p.name)}`;
       const at = index.get(key);
       if (at !== undefined) {
-        if (p.area) points[at] = { ...points[at], area: p.area };
+        const cur = points[at];
+        const added = (['board', 'drop'] as const).filter((k) => p[k] && !cur[k]);
+        points[at] = {
+          ...cur,
+          area: p.area || cur.area,
+          board: cur.board || p.board,
+          drop: cur.drop || p.drop,
+          ...(added.length && { unscheduled: [...new Set([...(cur.unscheduled ?? []), ...added])] }),
+        };
         continue;
       }
       index.set(key, points.length);
-      points.push({ name: p.name, city: city.name, area: p.area || city.name, board: p.board, drop: p.drop, routes: 0, scheduled: false });
+      const dirs = (['board', 'drop'] as const).filter((k) => p[k]);
+      points.push({ name: p.name, city: city.name, area: p.area || city.name, board: p.board, drop: p.drop, routes: 0, unscheduled: [...dirs] });
     }
   }
   return { cities, points };

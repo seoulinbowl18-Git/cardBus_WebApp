@@ -292,10 +292,10 @@ function CityBlock({ group: g, kind, current, expanded, onToggle, onPick }: City
         // Garis pemandu dari baris induk ke titik-titik di bawahnya
         <div id={listId} className={`relative ml-[29px] border-l-2 border-teal-soft pl-3 ${g.cityMatch ? 'mt-1' : ''}`}>
           {terminals.length > 0 && (
-            <PointGroup label="Terminal" points={terminals} city={g.city} top={top} isOn={isOn} onPick={onPick} terminal />
+            <PointGroup label="Terminal" kind={kind} points={terminals} city={g.city} top={top} isOn={isOn} onPick={onPick} terminal />
           )}
           {others.length > 0 && (
-            <PointGroup label="Agen & titik lainnya" points={others} city={g.city} top={top} isOn={isOn} onPick={onPick} />
+            <PointGroup label="Agen & titik lainnya" kind={kind} points={others} city={g.city} top={top} isOn={isOn} onPick={onPick} />
           )}
         </div>
       )}
@@ -305,6 +305,7 @@ function CityBlock({ group: g, kind, current, expanded, onToggle, onPick }: City
 
 function PointGroup({
   label,
+  kind,
   points,
   city,
   top,
@@ -313,6 +314,7 @@ function PointGroup({
   terminal = false,
 }: {
   label: string;
+  kind: 'board' | 'drop';
   points: LocationPoint[];
   city: string;
   top: LocationPoint | null;
@@ -343,7 +345,7 @@ function PointGroup({
                     {top?.name === p.name && (
                       <span className="shrink-0 rounded-full bg-gold px-1.5 py-px text-[10px] font-extrabold text-brand-dark">Terpopuler</span>
                     )}
-                    {p.scheduled === false && (
+                    {p.unscheduled?.includes(kind) && (
                       <span className="shrink-0 rounded-full bg-[#f1f5f5] px-1.5 py-px text-[10px] font-bold text-faint">Belum ada jadwal</span>
                     )}
                   </span>
