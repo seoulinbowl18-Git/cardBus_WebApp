@@ -4,8 +4,8 @@
  * berada di BELAKANG konten hero (form cari tetap putih solid di atasnya).
  *
  * Semua ornamen SVG inline (tanpa file gambar / dependency) sehingga tidak ada request tambahan
- * maupun layout shift. Ornamen diletakkan di pita atas dan pita bawah hero; bagian tengah dibiarkan
- * kosong untuk sapaan dan form.
+ * maupun layout shift. Pin, rute, dan tiket di pita atas; bus samar di samping sapaan; gelombang di
+ * tepi bawah (hero berakhir sejajar bagian bawah kartu cari).
  */
 export function HeroBackdrop({ className = '' }: { className?: string }) {
   return (
@@ -41,23 +41,9 @@ export function HeroBackdrop({ className = '' }: { className?: string }) {
         <path d="M520 120 C 820 70, 1120 64, 1440 86 V120 Z" fill="white" fillOpacity={0.08} />
       </svg>
 
-      {/* Rute bawah: dari depan bus menuju pin di kanan bawah */}
-      <div className="absolute bottom-[50px] left-[134px] right-[34px] h-10 text-white/[0.15] sm:bottom-[70px] sm:left-[calc(2%+200px)] sm:right-[calc(4%+40px)] sm:h-14">
-        <svg className="h-full w-full" viewBox="0 0 400 40" preserveAspectRatio="none" fill="none">
-          <path
-            d="M0 36 C 90 34, 170 30, 250 16 S 360 2, 400 4"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeDasharray="7 7"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-      </div>
-      <Pin className="absolute bottom-[60px] right-[14px] h-7 w-6 text-white/[0.14] sm:bottom-[88px] sm:right-[4%] sm:h-9 sm:w-8" />
-
-      {/* Bus di kiri bawah, "melaju" di atas gelombang */}
-      <Bus className="absolute bottom-[20px] -left-2 h-[60px] w-[141px] text-white/[0.10] sm:bottom-[30px] sm:left-[2%] sm:h-[86px] sm:w-[202px]" />
+      {/* Bus samar: di ruang kosong kanan sapaan (di atas kartu cari). Disembunyikan di bawah md karena
+          tidak ada ruang kosong tanpa menutupi teks. */}
+      <Bus className="absolute right-[5%] top-[100px] hidden h-[78px] w-[183px] text-white/[0.10] md:block lg:top-[104px]" />
     </div>
   );
 }

@@ -17,29 +17,23 @@ export default async function HomePage() {
   return (
     <div className="space-y-8">
       {/* Hero selebar layar: sapaan + bilah cari horizontal */}
-      <section className="relative -mt-8 ml-[calc(50%-50vw)] w-screen">
+      {/* pb = bagian kartu cari yang menjuntai di bawah hero (tombol Cari Tiket), agar konten berikutnya tidak tertimpa */}
+      <section className="relative -mt-8 ml-[calc(50%-50vw)] w-screen pb-[76px] sm:pb-[84px]">
         <div className="relative rounded-b-[28px] bg-brand-dark sm:rounded-none">
           {/* Latar teal + ornamen perjalanan (tiket, bus, pin, rute, gelombang), di belakang konten */}
           <HeroBackdrop className="rounded-b-[28px] sm:rounded-none" />
-          {/* pt/pb memberi ruang pita ornamen atas & bawah agar tidak tertutup form */}
-          <div className="relative mx-auto grid max-w-[1360px] grid-cols-[minmax(0,1fr)] items-center gap-5 px-4 pb-[92px] pt-12 sm:px-8 sm:pb-[124px] sm:pt-[88px] lg:pt-[92px] 2xl:grid-cols-[minmax(0,0.62fr)_minmax(0,2fr)] 2xl:gap-12 2xl:pb-[136px] 2xl:pt-24">
+          {/* pt memberi ruang pita ornamen atas; tanpa pb: hero berakhir sejajar bagian bawah kolom isian kartu */}
+          <div className="relative mx-auto grid max-w-[1360px] grid-cols-[minmax(0,1fr)] items-center gap-5 px-4 pt-12 sm:px-8 sm:pt-[88px] lg:pt-[92px]">
             <div className="space-y-2">
               <Greeting />
               <p className="max-w-md text-sm text-white/85 sm:text-base">Tiket Bus, Lebih Mudah. Pilih kursi sendiri, bayar QRIS atau Virtual Account.</p>
             </div>
-            <SearchCard />
+            {/* Kartu menjuntai keluar hero sebesar baris tombol (margin negatif = pb section di atas) */}
+            <div className="relative -mb-[76px] min-w-0 sm:-mb-[84px]">
+              <SearchCard />
+            </div>
           </div>
         </div>
-        {/* Panah bawah mengambang: lanjut ke Promo & Info */}
-        <a
-          href="#promo"
-          aria-label="Lihat promo dan jadwal pilihan"
-          className="absolute bottom-0 left-1/2 grid h-11 w-11 -translate-x-1/2 translate-y-1/2 place-items-center rounded-full border border-line bg-white text-muted shadow-md transition hover:text-brand"
-        >
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="m6 9 6 6 6-6" />
-          </svg>
-        </a>
       </section>
 
       <section id="promo" className="scroll-mt-24 pt-2">
