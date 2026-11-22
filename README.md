@@ -97,6 +97,24 @@ lama tiap 30 detik. Bila backend tidak bisa dihubungi, beranda memakai daftar ca
 Jadwal berstatus **Tayang** langsung muncul di pencarian penumpang (`GET /api/trips` membaca tabel yang sama);
 **Draf** dan jadwal milik PO nonaktif tidak tampil.
 
+## PWA (installable & offline)
+
+| Berkas | Fungsi |
+| --- | --- |
+| `src/app/manifest.ts` | Web App Manifest → `/manifest.webmanifest` (nama, warna, ikon, shortcut) |
+| `public/icons/` | Ikon 192/512 (`any`) dan `maskable` (dibuat dari `public/icon.png`) |
+| `public/sw.js` | Service worker (header `no-cache` di `next.config.ts`) |
+| `src/app/offline/` | Halaman fallback saat tidak ada koneksi |
+| `src/components/pwa/sw-register.tsx` | Mendaftarkan SW hanya di build produksi (di `next dev` SW dilepas) |
+| `src/components/pwa/install-prompt.tsx` | Banner "Pasang aplikasi" (Android/Chrome) atau petunjuk iOS Safari |
+
+Aturan cache SW: request ke backend/Firebase/origin lain, `/admin`, `/api`, payload RSC, dan non-GET **tidak pernah**
+disentuh; halaman dinamis (`/cari`, `/checkout`, `/pesanan/...`, `/ulasan/...`) selalu dari jaringan dan
+menampilkan `/offline` bila gagal. Hanya halaman statis publik (`/`, `/promo`, teks legal) yang disimpan
+(network-first), `/_next/static` cache-first, gambar lokal stale-while-revalidate. Naikkan `VERSION` di
+`public/sw.js` bila strategi cache diubah. Banner install tidak tampil di halaman cari, checkout, pembayaran,
+login, maupun ulasan; di beranda baru muncul setelah form cari tiket digulir lewat, dan "Nanti saja" diingat 14 hari.
+
 ## Struktur
 
 ```

@@ -20,6 +20,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Service worker PWA: selalu cek versi terbaru (jangan di-cache browser/CDN).
+        source: '/sw.js',
+        headers: [
+          { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
+      },
+      {
         // Panel Admin Pusat: jangan diindeks mesin pencari (akses tetap dijaga backend).
         source: '/admin/:path*',
         headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],

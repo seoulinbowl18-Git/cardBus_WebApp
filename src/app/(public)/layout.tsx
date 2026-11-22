@@ -1,4 +1,5 @@
 import { BottomNav } from '@/components/bottom-nav';
+import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { SiteHeader } from '@/components/site-header';
 import { AuthProvider } from '@/providers/auth-provider';
 import { UiProvider } from '@/providers/ui-provider';
@@ -12,6 +13,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         {/* pb-28 di HP: ruang untuk menu bawah */}
         <main className="mx-auto max-w-5xl px-4 pb-28 pt-8 sm:pb-12">{children}</main>
         <BottomNav />
+        <InstallPrompt />
       </UiProvider>
     </AuthProvider>
   );
