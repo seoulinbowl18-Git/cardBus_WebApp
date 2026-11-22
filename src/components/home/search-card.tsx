@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { DEFAULT_ROUTE } from '@/lib/home-content';
 import { dateParts, todayWib } from '@/lib/format';
 import { pointAllowed, useLocations, type Place } from '@/lib/locations';
-import { MAX_SEATS, PASSENGER_PARAM } from '@/lib/seats';
 import { DatePicker } from './date-picker';
 import { LocationField, SearchRow } from './location-picker';
 
@@ -32,7 +31,6 @@ export function SearchCard() {
   const [to, setTo] = useState<Place>({ city: DEFAULT_ROUTE.to, point: null });
   const [date, setDate] = useState(today);
   const [pickingDate, setPickingDate] = useState(false);
-  const [passengers, setPassengers] = useState(1);
   const sameCity = from.city === to.city;
   const p = dateParts(date);
   // Hanya untuk tampilan tombol (memuat) selama halaman /cari disiapkan; logika cari tidak berubah.
@@ -49,7 +47,7 @@ export function SearchCard() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (sameCity) return;
-    const q = new URLSearchParams({ from: from.city, to: to.city, date, [PASSENGER_PARAM]: String(passengers) });
+    const q = new URLSearchParams({ from: from.city, to: to.city, date });
     if (from.point) q.set('boardPoint', from.point);
     if (to.point) q.set('dropPoint', to.point);
     startSearch(() => router.push(`/cari?${q}`));
@@ -67,7 +65,6 @@ export function SearchCard() {
       {from.point && <input type="hidden" name="boardPoint" value={from.point} />}
       {to.point && <input type="hidden" name="dropPoint" value={to.point} />}
       <input type="hidden" name="date" value={date} />
-      <input type="hidden" name={PASSENGER_PARAM} value={passengers} />
 
       {/* HP: baris bertumpuk dengan garis pemisah. Desktop (lg): satu bilah dengan pemisah vertikal. */}
       <div className="flex flex-col lg:flex-row lg:items-center">
@@ -114,15 +111,8 @@ export function SearchCard() {
         </div>
       </div>
 
-      {/* Pemisah: di HP sama dengan antar-baris, di desktop memisahkan baris kedua */}
-      <div className="mx-3 h-px bg-line" aria-hidden />
-
-      {/* JUMLAH PENUMPANG + Cari Tiket (desktop: berdampingan) */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:gap-6 lg:pr-1">
-        <PassengerField value={passengers} onChange={setPassengers} className="lg:w-[360px] lg:shrink-0" />
-
-      {/* Cari Tiket: emas, teks dark teal; status tekan, nonaktif, dan memuat */}
-      <div className="mt-2 flex justify-center px-1 pb-1 sm:mt-3 lg:mt-0 lg:flex-1 lg:justify-end lg:pb-0">
+      {/* Cari Tiket: di tengah di bawah kolom (seperti web app); emas, teks dark teal; status tekan, nonaktif, memuat */}
+      <div className="mt-2 flex justify-center px-1 pb-1 sm:mt-3">
         <button
           disabled={sameCity || searching}
           aria-busy={searching}
@@ -142,46 +132,7 @@ export function SearchCard() {
           {searching ? 'Mencari jadwal…' : 'Cari Tiket'}
         </button>
       </div>
-      </div>
       {sameCity && <p className="mt-1 px-3 pb-1 text-xs font-semibold text-red-700">Kota asal dan tujuan tidak boleh sama.</p>}
     </form>
-  );
-}
-
-/**
- * JUMLAH PENUMPANG: ikon pengguna teal, nilai tegas, dan tombol − / + bulat (44px).
- * Satu penumpang = satu kursi; batas MAX_SEATS mengikuti batas backend per pesanan.
- */
-function PassengerField({ value, onChange, className = '' }: { value: number; onChange: (n: number) => void; className?: string }) {
-  const stepBtn =
-    'grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line bg-white text-brand shadow-[0_2px_6px_-3px_rgba(4,46,49,0.25)] transition hover:border-brand/40 hover:bg-teal-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 active:scale-95 disabled:cursor-not-allowed disabled:text-faint disabled:opacity-50 disabled:shadow-none disabled:hover:border-line disabled:hover:bg-white disabled:active:scale-100';
-  return (
-    <div role="group" aria-label="Jumlah penumpang" className={`flex min-w-0 items-center gap-3 px-3 py-3 min-[380px]:gap-3.5 ${className}`}>
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-teal-soft text-brand" aria-hidden>
-        <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="currentColor">
-          <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7.5 0a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM9 13c-3.9 0-7 2.2-7 5v1.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V18c0-2.8-3.1-5-7-5Zm7.6.1c1.4 1.1 2.4 2.7 2.4 4.9v1.5c0 .5-.1 1-.3 1.5h2.8c.8 0 1.5-.7 1.5-1.5V18c0-2.6-2.7-4.6-6.4-4.9Z" />
-        </svg>
-      </span>
-      <span className="min-w-0 flex-1">
-        {/* Satu baris di semua lebar HP (≥360px): jarak huruf sedikit dirapatkan di layar sempit */}
-        <span className="block whitespace-nowrap text-[11px] font-bold uppercase leading-none tracking-[0.03em] text-faint min-[380px]:tracking-[0.08em]">Jumlah penumpang</span>
-        <span className="mt-1.5 block truncate leading-tight text-ink" aria-live="polite">
-          <span className="text-xl font-extrabold">{value}</span> <span className="text-base font-semibold">penumpang</span>
-        </span>
-        <span className="mt-1 block truncate text-[13px] leading-snug text-muted">Maks. {MAX_SEATS} kursi</span>
-      </span>
-      <div className="flex shrink-0 items-center gap-1.5 min-[380px]:gap-2">
-        <button type="button" className={stepBtn} onClick={() => onChange(value - 1)} disabled={value <= 1} aria-label="Kurangi penumpang">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" aria-hidden>
-            <path d="M6 12h12" />
-          </svg>
-        </button>
-        <button type="button" className={stepBtn} onClick={() => onChange(value + 1)} disabled={value >= MAX_SEATS} aria-label="Tambah penumpang">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" aria-hidden>
-            <path d="M12 6v12M6 12h12" />
-          </svg>
-        </button>
-      </div>
-    </div>
   );
 }
