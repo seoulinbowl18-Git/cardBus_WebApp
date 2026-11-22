@@ -143,10 +143,13 @@ export interface LocationPoint {
   board: boolean;
   drop: boolean;
   routes: number;
+  /** false = titik kurasi (src/data/pickup-points.json) yang belum dipakai jadwal aktif mana pun. */
+  scheduled?: boolean;
 }
 
 export interface Locations {
-  cities: { name: string; routes: number }[];
+  /** aliases: kata kunci pencarian tambahan (mis. "Kota Malang"), dari data kurasi. */
+  cities: { name: string; routes: number; aliases?: string[] }[];
   points: LocationPoint[];
 }
 

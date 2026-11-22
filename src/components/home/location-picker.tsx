@@ -234,7 +234,9 @@ function CityBlock({ group: g, kind, current, expanded, onToggle, onPick }: City
   const terminals = g.points.filter((p) => isTerminal(p.name));
   const others = g.points.filter((p) => !isTerminal(p.name));
   // Titik terpopuler di kota ini (hanya bila ada pilihan lain)
-  const top = g.points.length > 1 ? g.points.reduce((a, b) => (b.routes > a.routes ? b : a)) : null;
+  // Titik dengan rute terbanyak; hanya bila benar-benar ada rute (titik kurasi tanpa jadwal = 0 rute)
+  const busiest = g.points.length > 1 ? g.points.reduce((a, b) => (b.routes > a.routes ? b : a)) : null;
+  const top = busiest && busiest.routes > 0 ? busiest : null;
   const listId = useId();
 
   return (
@@ -340,6 +342,9 @@ function PointGroup({
                     <span className="truncate text-sm font-bold text-ink">{p.name}</span>
                     {top?.name === p.name && (
                       <span className="shrink-0 rounded-full bg-gold px-1.5 py-px text-[10px] font-extrabold text-brand-dark">Terpopuler</span>
+                    )}
+                    {p.scheduled === false && (
+                      <span className="shrink-0 rounded-full bg-[#f1f5f5] px-1.5 py-px text-[10px] font-bold text-faint">Belum ada jadwal</span>
                     )}
                   </span>
                   <span className="block truncate text-xs text-muted">{p.area !== city ? `${p.area}, ${city}` : city}</span>
