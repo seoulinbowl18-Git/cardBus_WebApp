@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "skills": {
+    "mobile-ui-design": {
+      "source": "ArnavPuri/designskills",
+      "commit": "c7873015add8571ca95043febad0d9e6c97ee5c6",
+      "sourceType": "github",
+      "skillPath": "skills/mobile-ui-design/SKILL.md",
+      "computedHash": "9b7cc80c2c50919218b3d5f3eabb474037d438dcb640909bc61bbb9996438b80"
+    }
+  }
+}
