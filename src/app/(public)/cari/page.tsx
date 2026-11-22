@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { HeaderBackdrop } from '@/components/home/hero-backdrop';
 import { TripCard, cheapestTier, seatsLeft } from '@/components/trip-card';
 import { ApiError } from '@/lib/api/client';
 import { tripApi } from '@/lib/api/endpoints';
@@ -73,7 +74,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
 
   return (
     <section className="space-y-4">
-      <div className="-mx-4 -mt-8 space-y-3 rounded-b-[24px] bg-[linear-gradient(135deg,#0a8c84_0%,#087f78_35%,#064e52_100%)] px-4 pb-4 pt-5 text-white sm:mx-0 sm:mt-0 sm:rounded-[24px] sm:p-6">
+      <div className="relative isolate -mx-4 -mt-8 space-y-3 overflow-hidden rounded-b-[24px] bg-brand px-4 pb-4 pt-5 text-white sm:mx-0 sm:mt-0 sm:rounded-[24px] sm:p-6">
+        {/* Latar teal senada Hero Beranda (dekoratif, di belakang konten) */}
+        <HeaderBackdrop
+          ticketClassName="right-7 top-[47px] sm:right-8 sm:top-[62px]"
+          ticketSizeClassName="h-[22px] w-[36px] sm:h-[40px] sm:w-[66px]"
+        />
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-xl font-extrabold sm:text-2xl">

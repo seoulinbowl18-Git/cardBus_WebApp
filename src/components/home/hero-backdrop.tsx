@@ -10,11 +10,7 @@
 export function HeroBackdrop({ className = '' }: { className?: string }) {
   return (
     <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden>
-      {/* Gradasi dasar: dark teal (kiri atas) → teal → tosca lembut (kanan bawah) */}
-      <div className="absolute inset-0 bg-[linear-gradient(168deg,#065a5a_0%,#077570_28%,#087f78_52%,#0b8f86_80%,#12a093_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(90%_60%_at_88%_100%,rgba(64,196,180,0.45)_0%,rgba(64,196,180,0)_70%)]" />
-      {/* Lengkung lembut besar di kiri atas, seperti referensi */}
-      <div className="absolute -left-[38%] -top-[62%] aspect-square w-[95%] rounded-full bg-white/[0.045] sm:-left-[12%] sm:-top-[150%] sm:w-[55%]" />
+      <TealBase arcClassName="-left-[38%] -top-[62%] w-[95%] sm:-left-[12%] sm:-top-[150%] sm:w-[55%]" />
 
       {/* ── Pita atas: pin lokasi → rute putus-putus → tiket ── */}
       <Pin className="absolute left-[4%] top-2 h-7 w-6 text-white/[0.14] sm:left-[3%] sm:top-4 sm:h-9 sm:w-8" />
@@ -62,6 +58,62 @@ export function HeroBackdrop({ className = '' }: { className?: string }) {
 
       {/* Bus di kiri bawah, "melaju" di atas gelombang */}
       <Bus className="absolute bottom-[20px] -left-2 h-[60px] w-[141px] text-white/[0.10] sm:bottom-[30px] sm:left-[2%] sm:h-[86px] sm:w-[202px]" />
+    </div>
+  );
+}
+
+/** Gradasi dasar CardBus: dark teal (kiri atas) → teal → tosca lembut (kanan bawah) + lengkung terang. */
+function TealBase({ arcClassName }: { arcClassName: string }) {
+  return (
+    <>
+      <div className="absolute inset-0 bg-[linear-gradient(168deg,#065a5a_0%,#077570_28%,#087f78_52%,#0b8f86_80%,#12a093_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(90%_60%_at_88%_100%,rgba(64,196,180,0.45)_0%,rgba(64,196,180,0)_70%)]" />
+      <div className={`absolute aspect-square rounded-full bg-white/[0.045] ${arcClassName}`} />
+    </>
+  );
+}
+
+/**
+ * Versi ringkas untuk header teal halaman lain (Akun, Hasil Pencarian): gradasi & lengkung yang sama
+ * dengan Hero, rute putus-putus tipis di tepi atas (di atas judul), tiket kecil di kanan, dan gelombang
+ * samar di bawah. Tanpa bus (akan tertutup kartu/chip). Dekoratif saja: aria-hidden, tidak bisa diklik.
+ *
+ * Pakai di dalam elemen `relative isolate overflow-hidden`; komponen ini memakai -z-10 sehingga selalu
+ * di belakang konten header tanpa perlu mengubah elemen anaknya.
+ */
+export function HeaderBackdrop({
+  ticketClassName = 'right-4 top-[52px]',
+  ticketSizeClassName = 'h-[28px] w-[46px] sm:h-[40px] sm:w-[66px]',
+}: {
+  /** Posisi tiket: letakkan di area kosong header agar tidak berimpit dengan tombol/chip. */
+  ticketClassName?: string;
+  ticketSizeClassName?: string;
+}) {
+  return (
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+      <TealBase arcClassName="-left-[30%] -top-[120%] w-[80%] sm:-left-[10%] sm:-top-[260%] sm:w-[45%]" />
+
+      {/* Pita atas (tipis, di atas judul): pin → rute putus-putus */}
+      <Pin className="absolute left-3 top-0.5 h-[18px] w-[15px] text-white/[0.14] sm:left-5 sm:top-1.5" />
+      <div className="absolute left-8 right-24 top-1.5 h-4 text-white/[0.15] sm:left-11 sm:right-40 sm:top-3">
+        <svg className="h-full w-full" viewBox="0 0 400 20" preserveAspectRatio="none" fill="none">
+          <path
+            d="M0 8 C 90 2, 170 4, 240 11 S 350 18, 400 10"
+            stroke="currentColor"
+            strokeWidth={1.6}
+            strokeDasharray="6 6"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      </div>
+      <Ticket className={`absolute rotate-[-14deg] text-white/[0.12] ${ticketSizeClassName} ${ticketClassName}`} />
+
+      {/* Gelombang samar di tepi bawah */}
+      <svg className="absolute inset-x-0 bottom-0 h-12 w-full sm:h-16" viewBox="0 0 1440 120" preserveAspectRatio="none" fill="none">
+        <path d="M0 60 C 300 30, 620 40, 900 66 S 1280 96, 1440 54 V120 H0 Z" fill="white" fillOpacity={0.05} />
+        <path d="M480 120 C 800 76, 1120 70, 1440 92 V120 Z" fill="white" fillOpacity={0.06} />
+      </svg>
     </div>
   );
 }
