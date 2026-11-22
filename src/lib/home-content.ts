@@ -27,6 +27,8 @@ export interface Promo {
 /** Kartu "Produk unggulan": dari GET /api/featured (dikelola Admin Pusat), cadangan [FEATURED]. */
 export interface FeaturedProduct {
   id: string;
+  /** ID PO (dikirim GET /api/featured); dipakai untuk mengambil ulasan penumpang. */
+  poId?: string;
   poName: string;
   logo?: string | null;
   image?: string | null;

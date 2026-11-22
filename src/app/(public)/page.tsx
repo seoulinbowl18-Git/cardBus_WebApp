@@ -1,9 +1,12 @@
 import Link from 'next/link';
 import { FeaturedGrid, FeatureStrip, Greeting, PromoRow, SectionTitle } from '@/components/home/home-sections';
 import { HeroBackdrop } from '@/components/home/hero-backdrop';
+import { AppBanner } from '@/components/home/app-banner';
 import { SearchCard } from '@/components/home/search-card';
+import { Testimonials } from '@/components/home/testimonials';
 import { loadBanners } from '@/lib/banners';
 import { loadFeatured } from '@/lib/featured';
+import { loadTestimonials } from '@/lib/testimonials';
 
 // Banner & produk unggulan dikelola di Admin Pusat: beranda diperbarui paling lama tiap 30 detik.
 export const revalidate = 30;
@@ -14,6 +17,8 @@ export const revalidate = 30;
  */
 export default async function HomePage() {
   const [featured, banners] = await Promise.all([loadFeatured(), loadBanners()]);
+  // Ulasan asli penumpang dari PO yang tampil di Produk unggulan (kosong = seksi disembunyikan)
+  const testimonials = await loadTestimonials(featured);
   return (
     <div className="space-y-8">
       {/* Hero selebar layar: sapaan + bilah cari horizontal */}
@@ -63,6 +68,10 @@ export default async function HomePage() {
         <SectionTitle title="Kenapa CardBus?" />
         <FeatureStrip />
       </section>
+
+      <AppBanner />
+
+      <Testimonials items={testimonials} />
 
       <p className="text-center text-xs text-faint">
         Sudah pesan? <Link href="/pesanan" className="font-semibold text-brand">Lihat Tiket Saya</Link>
