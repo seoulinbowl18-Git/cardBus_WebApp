@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { groupPlaces, type Place } from '@/lib/locations';
-import type { Locations } from '@/lib/types';
+import { groupPlaces, type CityGroup, type Place } from '@/lib/locations';
+import type { LocationPoint, Locations } from '@/lib/types';
 
 interface FieldProps {
   label: 'Dari' | 'Ke';
@@ -23,6 +23,49 @@ const CityIcon = () => (
   </svg>
 );
 
+interface SearchRowProps {
+  onClick: () => void;
+  ariaLabel: string;
+  ariaHasPopup?: 'dialog';
+  ariaExpanded?: boolean;
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  detail: React.ReactNode;
+  /** Ditandai aktif (mis. kalender sedang terbuka). */
+  active?: boolean;
+  className?: string;
+}
+
+/**
+ * Satu baris di kartu cari (Dari / Ke / Tanggal): lingkaran ikon teal, label kecil, nilai tegas,
+ * keterangan sekunder, dan chevron. Area sentuh selebar baris (tinggi ≥ 72px).
+ */
+export function SearchRow({ onClick, ariaLabel, ariaHasPopup, ariaExpanded, icon, label, value, detail, active = false, className = '' }: SearchRowProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-haspopup={ariaHasPopup}
+      aria-expanded={ariaExpanded}
+      aria-label={ariaLabel}
+      className={`group flex w-full min-w-0 items-center gap-3.5 rounded-[18px] px-3 py-3 text-left transition-colors duration-150 hover:bg-[#f3f8f8] active:bg-teal-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${active ? 'bg-teal-soft/70' : ''} ${className}`}
+    >
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-teal-soft text-brand transition-colors group-hover:bg-[#d5ecea]">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[11px] font-bold uppercase leading-none tracking-[0.08em] text-faint">{label}</span>
+        <span className="mt-1.5 block truncate text-xl font-extrabold leading-tight text-ink">{value}</span>
+        <span className="mt-1 block truncate text-[13px] leading-snug text-muted">{detail}</span>
+      </span>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-muted transition-colors group-hover:text-brand" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    </button>
+  );
+}
+
 /**
  * Kotak "Dari" / "Ke" yang bisa diklik (padanan LocationField + PointPickerScreen di mobile).
  * Membuka daftar kota & titik naik/turun dari backend, bisa dicari dengan mengetik.
@@ -33,20 +76,16 @@ export function LocationField({ label, value, locations, onChange, className = '
   const verb = kind === 'board' ? 'naik' : 'turun';
   return (
     <>
-      <button
-        type="button"
+      <SearchRow
         onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        aria-label={`${label}: ${value.point ? `${value.point}, ${value.city}` : value.city}. Ubah`}
-        className={`group flex min-w-0 flex-col justify-center rounded-2xl border border-line bg-white px-4 py-2.5 text-left transition hover:border-brand focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 ${className}`}
-      >
-        <span className="block text-[11px] font-semibold uppercase tracking-wider text-faint">{label}</span>
-        <span className="mt-0.5 flex min-w-0 items-center gap-2">
-          <PinIcon className="h-5 w-5 shrink-0 text-brand" />
-          <span className="truncate text-lg font-semibold leading-tight text-ink">{value.point ?? value.city}</span>
-        </span>
-        <span className="mt-0.5 block truncate pl-7 text-xs text-faint">{value.point ? value.city : `Semua titik ${verb} di ${value.city}`}</span>
-      </button>
+        ariaHasPopup="dialog"
+        ariaLabel={`${label}: ${value.point ? `${value.point}, ${value.city}` : value.city}. Ubah`}
+        icon={<PinIcon className="h-[22px] w-[22px]" />}
+        label={label}
+        value={value.point ?? value.city}
+        detail={value.point ? value.city : `Semua titik ${verb} di ${value.city}`}
+        className={className}
+      />
       {open && (
         <PickerDialog
           title={kind === 'board' ? 'Pilih titik naik' : 'Pilih titik turun'}
@@ -78,6 +117,8 @@ function PickerDialog({ title, kind, current, locations, onClose, onPick }: Dial
   const inputRef = useRef<HTMLInputElement>(null);
   const titleId = useId();
   const verb = kind === 'board' ? 'naik' : 'turun';
+  // Kota yang dibuka manual (kota pilihan saat ini & hasil pencarian selalu terbuka)
+  const [openCities, setOpenCities] = useState<Set<string>>(() => new Set());
   const groups = useMemo(() => (locations ? groupPlaces(locations, kind, q, current.city) : []), [locations, kind, q, current.city]);
   const first: Place | null = groups[0] ? (groups[0].cityMatch ? { city: groups[0].city, point: null } : { city: groups[0].city, point: groups[0].points[0]?.name ?? null }) : null;
 
@@ -92,8 +133,6 @@ function PickerDialog({ title, kind, current, locations, onClose, onPick }: Dial
       document.body.style.overflow = prev;
     };
   }, [onClose]);
-
-  const isOn = (p: Place) => p.city === current.city && p.point === current.point;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-6" onClick={onClose}>
@@ -148,32 +187,22 @@ function PickerDialog({ title, kind, current, locations, onClose, onPick }: Dial
             </div>
           )}
           {groups.map((g) => (
-            <section key={g.city} className="border-b border-line last:border-0">
-              <h3 className="sticky top-0 z-10 bg-[#f4f7f7] px-4 py-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
-                {g.city}{g.city === current.city ? ' · pilihan saat ini' : ''}
-              </h3>
-              <ul>
-                {g.cityMatch && (
-                  <Option
-                    on={isOn({ city: g.city, point: null })}
-                    icon={<CityIcon />}
-                    title={`Semua titik ${verb} di ${g.city}`}
-                    subtitle={`${g.points.length} titik ${verb}`}
-                    onClick={() => onPick({ city: g.city, point: null })}
-                  />
-                )}
-                {g.points.map((p) => (
-                  <Option
-                    key={p.name}
-                    on={isOn({ city: g.city, point: p.name })}
-                    icon={<PinIcon />}
-                    title={p.name}
-                    subtitle={p.area !== g.city ? `${g.city} · ${p.area}` : g.city}
-                    onClick={() => onPick({ city: g.city, point: p.name })}
-                  />
-                ))}
-              </ul>
-            </section>
+            <CityBlock
+              key={g.city}
+              group={g}
+              kind={kind}
+              current={current}
+              expanded={!!q.trim() || g.city === current.city || openCities.has(g.city)}
+              onToggle={() =>
+                setOpenCities((s) => {
+                  const next = new Set(s);
+                  if (next.has(g.city)) next.delete(g.city);
+                  else next.add(g.city);
+                  return next;
+                })
+              }
+              onPick={onPick}
+            />
           ))}
         </div>
       </div>
@@ -181,26 +210,168 @@ function PickerDialog({ title, kind, current, locations, onClose, onPick }: Dial
   );
 }
 
-function Option({ on, icon, title, subtitle, onClick }: { on: boolean; icon: React.ReactNode; title: string; subtitle: string; onClick: () => void }) {
+/** Titik bernama "Terminal ..." dikelompokkan sebagai terminal; data backend tidak punya jenis titik. */
+const isTerminal = (name: string) => /^terminal\b/i.test(name.trim());
+
+interface CityBlockProps {
+  group: CityGroup;
+  kind: 'board' | 'drop';
+  current: Place;
+  expanded: boolean;
+  onToggle: () => void;
+  onPick: (p: Place) => void;
+}
+
+/**
+ * Satu kota dalam pemilih: judul kota, baris induk "Semua titik … di Kota", lalu titik spesifik
+ * bertingkat (Terminal / Agen & titik lainnya) dengan garis pemandu. Titik dengan rute terbanyak
+ * di kota itu diberi lencana "Terpopuler" (dari jumlah rute di GET /api/locations).
+ */
+function CityBlock({ group: g, kind, current, expanded, onToggle, onPick }: CityBlockProps) {
+  const verb = kind === 'board' ? 'naik' : 'turun';
+  const isCurrent = g.city === current.city;
+  const isOn = (point: string | null) => isCurrent && current.point === point;
+  const terminals = g.points.filter((p) => isTerminal(p.name));
+  const others = g.points.filter((p) => !isTerminal(p.name));
+  // Titik terpopuler di kota ini (hanya bila ada pilihan lain)
+  // Titik dengan rute terbanyak; hanya bila benar-benar ada rute (titik kurasi tanpa jadwal = 0 rute)
+  const busiest = g.points.length > 1 ? g.points.reduce((a, b) => (b.routes > a.routes ? b : a)) : null;
+  const top = busiest && busiest.routes > 0 ? busiest : null;
+  const listId = useId();
+
   return (
-    <li>
-      <button
-        type="button"
-        onClick={onClick}
-        aria-current={on ? 'true' : undefined}
-        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-teal-soft focus-visible:bg-teal-soft focus-visible:outline-none ${on ? 'bg-teal-soft' : ''}`}
-      >
-        <span className={on ? 'text-brand' : 'text-faint'}>{icon}</span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-bold">{title}</span>
-          <span className="block truncate text-xs text-muted">{subtitle}</span>
+    <section className="border-b border-line px-3 py-3 last:border-0">
+      <h3 className="flex items-center gap-2 px-1 pb-2">
+        <span className="truncate text-[15px] font-extrabold text-ink">{g.city}</span>
+        <span className="shrink-0 rounded-full bg-teal-soft px-2 py-0.5 text-[11px] font-bold text-brand">
+          {g.points.length} titik {verb}
         </span>
-        {on && (
-          <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-brand" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="m5 12.5 4.5 4.5L19 7.5" />
-          </svg>
+        {isCurrent && (
+          <span className="ml-auto shrink-0 rounded-full bg-gold/25 px-2 py-0.5 text-[11px] font-bold text-[#8a5a00]">Pilihan saat ini</span>
         )}
-      </button>
-    </li>
+      </h3>
+
+      {g.cityMatch && (
+        <button
+          type="button"
+          onClick={() => onPick({ city: g.city, point: null })}
+          aria-current={isOn(null) ? 'true' : undefined}
+          className={`flex w-full items-center gap-3 rounded-2xl px-2.5 py-2.5 text-left transition hover:bg-[#f3f8f8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${isOn(null) ? 'bg-teal-soft ring-1 ring-brand/30' : ''}`}
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-teal-soft text-brand">
+            <CityIcon />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-extrabold text-ink">Semua titik {verb} di {g.city}</span>
+            <span className="block truncate text-xs text-muted">
+              Tampilkan semua jadwal dari {terminals.length ? `${terminals.length} terminal` : ''}
+              {terminals.length && others.length ? ' & ' : ''}
+              {others.length ? `${others.length} titik lain` : ''}
+            </span>
+          </span>
+          {isOn(null) && <CheckIcon />}
+        </button>
+      )}
+
+      {g.points.length > 0 && !expanded && (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={false}
+          aria-controls={listId}
+          className="ml-[52px] mt-1 flex items-center gap-1 rounded-lg px-1.5 py-1 text-xs font-bold text-brand hover:bg-teal-soft"
+        >
+          Lihat {g.points.length} titik {verb}
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+      )}
+
+      {expanded && g.points.length > 0 && (
+        // Garis pemandu dari baris induk ke titik-titik di bawahnya
+        <div id={listId} className={`relative ml-[29px] border-l-2 border-teal-soft pl-3 ${g.cityMatch ? 'mt-1' : ''}`}>
+          {terminals.length > 0 && (
+            <PointGroup label="Terminal" kind={kind} points={terminals} city={g.city} top={top} isOn={isOn} onPick={onPick} terminal />
+          )}
+          {others.length > 0 && (
+            <PointGroup label="Agen & titik lainnya" kind={kind} points={others} city={g.city} top={top} isOn={isOn} onPick={onPick} />
+          )}
+        </div>
+      )}
+    </section>
   );
 }
+
+function PointGroup({
+  label,
+  kind,
+  points,
+  city,
+  top,
+  isOn,
+  onPick,
+  terminal = false,
+}: {
+  label: string;
+  kind: 'board' | 'drop';
+  points: LocationPoint[];
+  city: string;
+  top: LocationPoint | null;
+  isOn: (point: string | null) => boolean;
+  onPick: (p: Place) => void;
+  terminal?: boolean;
+}) {
+  return (
+    <div className="pt-1">
+      <p className="px-2 pb-0.5 pt-1.5 text-[11px] font-bold text-faint">{label}</p>
+      <ul>
+        {points.map((p) => {
+          const on = isOn(p.name);
+          return (
+            <li key={p.name}>
+              <button
+                type="button"
+                onClick={() => onPick({ city, point: p.name })}
+                aria-current={on ? 'true' : undefined}
+                className={`flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-[#f3f8f8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${on ? 'bg-teal-soft ring-1 ring-brand/30' : ''}`}
+              >
+                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${on ? 'bg-brand text-white' : 'bg-[#f1f5f5] text-brand'}`}>
+                  {terminal ? <TerminalIcon /> : <PinIcon className="h-[18px] w-[18px]" />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-bold text-ink">{p.name}</span>
+                    {top?.name === p.name && (
+                      <span className="shrink-0 rounded-full bg-gold px-1.5 py-px text-[10px] font-extrabold text-brand-dark">Terpopuler</span>
+                    )}
+                    {p.unscheduled?.includes(kind) && (
+                      <span className="shrink-0 rounded-full bg-[#f1f5f5] px-1.5 py-px text-[10px] font-bold text-faint">Belum ada jadwal</span>
+                    )}
+                  </span>
+                  <span className="block truncate text-xs text-muted">{p.area !== city ? `${p.area}, ${city}` : city}</span>
+                </span>
+                {on && <CheckIcon />}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-brand" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </svg>
+);
+
+/** Ikon terminal: bangunan beratap dengan bus kecil. */
+const TerminalIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M3 10 12 4l9 6M5 9.5V20h14V9.5" />
+    <rect x="8.5" y="12" width="7" height="5" rx="1.2" />
+    <path d="M10 17v1.5M14 17v1.5" />
+  </svg>
+);
