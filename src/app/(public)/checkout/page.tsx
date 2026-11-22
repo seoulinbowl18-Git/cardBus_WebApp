@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { RequireAuth } from '@/components/require-auth';
+import { parsePassengers, PASSENGER_PARAM } from '@/lib/seats';
 import { CheckoutForm } from './checkout-form';
 
 export const metadata: Metadata = { title: 'Checkout' };
@@ -19,6 +20,8 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
     tier: one(sp.tier) || undefined,
     boardPoint: one(sp.boardPoint) || undefined,
     dropPoint: one(sp.dropPoint) || undefined,
+    // Jumlah penumpang dari pencarian (parameter web). Tanpa parameter = bebas 1..MAX_SEATS seperti dulu.
+    passengers: parsePassengers(one(sp[PASSENGER_PARAM])) ?? undefined,
   };
   // ID jadwal: angka (backend PostgreSQL) atau 24 heksa (backend MongoDB lama)
   const valid = /^(\d{1,18}|[a-f0-9]{24})$/i.test(params.tripId) && params.from && params.to && /^\d{4}-\d{2}-\d{2}$/.test(params.date);

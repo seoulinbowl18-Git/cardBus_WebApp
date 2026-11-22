@@ -16,6 +16,7 @@ import { orderApi, tripApi, voucherApi } from '@/lib/api/endpoints';
 import { formatDuration, formatRupiah, shortDate } from '@/lib/format';
 import {
   MAX_SEATS,
+  PASSENGER_PARAM,
   isValidContactPhone,
   isValidEmail,
   isValidPassengerName,
@@ -35,6 +36,8 @@ interface Props {
   /** Titik naik/turun dari hasil pencarian, untuk kembali ke daftar yang sama. */
   boardPoint?: string;
   dropPoint?: string;
+  /** Jumlah penumpang dari pencarian: wajib memilih tepat sebanyak ini kursi. Kosong = bebas 1..MAX_SEATS. */
+  passengers?: number;
 }
 
 /** Keterangan metode, sama dengan PayMethod.subtitle di mobile. */
@@ -51,8 +54,11 @@ const METHOD_HINT: Record<PaymentMethod, string> = {
  * PaymentScreen): varian & kursi → nama penumpang → kontak → metode bayar → setuju S&K →
  * POST /api/payments/create. Harga final dihitung server; total di sini hanya perkiraan.
  */
-export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardPoint, dropPoint }: Props) {
+export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardPoint, dropPoint, passengers }: Props) {
   const router = useRouter();
+  // Satu penumpang = satu kursi. Dari pencarian: tepat `passengers` kursi; tanpa itu: 1..MAX_SEATS.
+  const seatMax = passengers ?? MAX_SEATS;
+  const seatNeed = passengers ?? 1;
   const { user } = useAuth();
 
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -91,9 +97,9 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
   useEffect(() => {
     if (!trip) return;
     if (!tierKey || !trip.tiers.some((t) => t.key === tierKey)) {
-      setTierKey((trip.tiers.find((t) => t.freeSeats.length > 0) ?? trip.tiers[0])?.key ?? null);
+      setTierKey((trip.tiers.find((t) => t.freeSeats.length >= seatNeed) ?? trip.tiers.find((t) => t.freeSeats.length > 0) ?? trip.tiers[0])?.key ?? null);
     }
-  }, [trip, tierKey]);
+  }, [trip, tierKey, seatNeed]);
 
   // Isi kontak dari profil (sekali, kalau masih kosong).
   useEffect(() => {
@@ -146,6 +152,8 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
 
   /** Dari denah: ketuk kursi varian lain → pindah varian dan pilih kursi itu. */
   function changeTierWithSeat(key: string, seat: string) {
+    // Varian dengan kursi kosong kurang dari jumlah penumpang tidak bisa dipilih
+    if ((trip?.tiers.find((t) => t.key === key)?.freeSeats.length ?? 0) < seatNeed) return;
     changeTier(key);
     const accountName = user?.name;
     if (accountName) setNames((n) => ({ ...n, [seat]: n[seat] || accountName }));
@@ -158,7 +166,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
       setSeats(seats.filter((s) => s !== seat));
       return;
     }
-    if (seats.length >= MAX_SEATS) return;
+    if (seats.length >= seatMax) return;
     // Penumpang pertama otomatis memakai nama akun
     const accountName = user?.name;
     if (seats.length === 0 && accountName) setNames((n) => ({ ...n, [seat]: n[seat] || accountName }));
@@ -172,7 +180,13 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
   }
 
   const errors = {
-    seats: seats.length === 0 ? 'Pilih minimal 1 kursi' : null,
+    seats: passengers
+      ? seats.length < passengers
+        ? `Pilih ${passengers - seats.length} kursi lagi (untuk ${passengers} penumpang)`
+        : null
+      : seats.length === 0
+        ? 'Pilih minimal 1 kursi'
+        : null,
     names: seats.some((s) => !isValidPassengerName(names[s] ?? '')) ? 'Nama penumpang minimal 3 huruf' : null,
     phone: !isValidContactPhone(phone) ? 'Nomor WhatsApp diawali 08, 10–13 digit' : null,
     email: !isValidEmail(email) ? 'Email tidak valid' : null,
@@ -218,7 +232,7 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
     }
   }
 
-  const backHref = `/cari?${new URLSearchParams({ from, to, date, ...(boardPoint && { boardPoint }), ...(dropPoint && { dropPoint }) })}`;
+  const backHref = `/cari?${new URLSearchParams({ from, to, date, ...(boardPoint && { boardPoint }), ...(dropPoint && { dropPoint }), ...(passengers && { [PASSENGER_PARAM]: String(passengers) }) })}`;
   if (loadError && !trip) {
     return (
       <div className="space-y-2 rounded-xl bg-red-50 p-4 text-red-700">
@@ -275,23 +289,30 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
 
         {/* 1. Varian & kursi */}
         <Step id="step-seats" n={1} title={trip.tiers.length > 1 ? 'Varian & kursi' : 'Pilih kursi'}>
+          {passengers && (
+            <p className="mb-3 text-sm text-muted">
+              Pilih <b className="text-ink">{passengers} kursi</b> untuk {passengers} penumpang.
+            </p>
+          )}
           {trip.tiers.length > 1 && (
             <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {trip.tiers.map((t) => {
                 const on = t.key === tierKey;
                 const soldOut = t.freeSeats.length === 0;
+                // Kurang kursi untuk semua penumpang = tidak bisa dipilih
+                const tooFew = !soldOut && t.freeSeats.length < seatNeed;
                 return (
                   <button
                     key={t.key}
                     type="button"
-                    disabled={soldOut}
+                    disabled={soldOut || tooFew}
                     onClick={() => changeTier(t.key)}
                     aria-pressed={on}
                     className={`rounded-xl border-[1.4px] px-3 py-2.5 text-left transition disabled:opacity-50 ${on ? 'border-brand bg-teal-soft' : 'border-line bg-white hover:border-brand'}`}
                   >
                     <span className="block text-sm font-extrabold">{t.name}</span>
                     <span className="block text-xs text-muted">
-                      {formatRupiah(t.price)} · {soldOut ? 'habis' : `sisa ${t.freeSeats.length}`}
+                      {formatRupiah(t.price)} · {soldOut ? 'habis' : tooFew ? `sisa ${t.freeSeats.length}, kurang` : `sisa ${t.freeSeats.length}`}
                     </span>
                     {t.oldPrice ? <span className="text-[11px] text-faint line-through">{formatRupiah(t.oldPrice)}</span> : null}
                   </button>
@@ -307,12 +328,12 @@ export function CheckoutForm({ tripId, from, to, date, tier: initialTier, boardP
                 tiers={trip.tiers}
                 tierKey={tier.key}
                 selected={seats}
-                max={MAX_SEATS}
+                max={seatMax}
                 onToggle={toggleSeat}
                 onTierChange={changeTierWithSeat}
               />
             ) : (
-              <SeatPicker tier={tier} selected={seats} max={MAX_SEATS} onToggle={toggleSeat} />
+              <SeatPicker tier={tier} selected={seats} max={seatMax} onToggle={toggleSeat} />
             ))}
           {show(errors.seats)}
         </Step>

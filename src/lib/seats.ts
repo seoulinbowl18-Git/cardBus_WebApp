@@ -2,6 +2,22 @@
 
 export const MAX_SEATS = 4; // batas backend: seats.max(4)
 
+/**
+ * Jumlah penumpang dari form cari Beranda. Hanya parameter URL web ini sendiri (/cari, /checkout),
+ * TIDAK dikirim ke backend: backend tidak punya parameter jumlah penumpang. Satu kursi = satu penumpang.
+ */
+export const PASSENGER_PARAM = 'penumpang';
+
+/** Nilai `?penumpang=` → 1..MAX_SEATS, atau null bila tidak ada / tidak valid (perilaku lama). */
+export function parsePassengers(v: string | null | undefined): number | null {
+  if (!v) return null;
+  const n = Number(v);
+  return Number.isInteger(n) && n >= 1 ? Math.min(n, MAX_SEATS) : null;
+}
+
+/** Kursi kosong terbanyak dalam SATU varian (satu pesanan memakai satu varian/kelas). */
+export const maxFreeInOneTier = (tiers: { freeSeats: string[] }[]) => tiers.reduce((m, t) => Math.max(m, t.freeSeats.length), 0);
+
 const SEAT_RE = /^(\d+)([A-Z]+)$/i;
 
 /** Urutkan kursi alami: 1A, 1B, 2A, …, 10A; nama lain (mis. K1) di akhir. */

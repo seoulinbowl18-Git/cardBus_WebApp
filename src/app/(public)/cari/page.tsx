@@ -4,6 +4,7 @@ import { TripCard, cheapestTier, seatsLeft } from '@/components/trip-card';
 import { ApiError } from '@/lib/api/client';
 import { tripApi } from '@/lib/api/endpoints';
 import { addDays, dateParts, shortDate, todayWib } from '@/lib/format';
+import { maxFreeInOneTier, parsePassengers, PASSENGER_PARAM } from '@/lib/seats';
 import type { Trip } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Hasil Pencarian' };
@@ -35,9 +36,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const boardPoint = one(sp.boardPoint).trim();
   const dropPoint = one(sp.dropPoint).trim();
   const points = { ...(boardPoint && { boardPoint }), ...(dropPoint && { dropPoint }) };
+  // Jumlah penumpang dari Beranda (parameter web, bukan backend). Tanpa parameter = perilaku lama.
+  const passengers = parsePassengers(one(sp[PASSENGER_PARAM]));
+  const paxParam: Record<string, string> = passengers ? { [PASSENGER_PARAM]: String(passengers) } : {};
   /** Link ke halaman ini dengan sebagian parameter diganti; nilai kosong = parameter dibuang. */
   const href = (q: Record<string, string>) => {
-    const all: Record<string, string> = { from, to, date, sort, ...points, ...q };
+    const all: Record<string, string> = { from, to, date, sort, ...points, ...paxParam, ...q };
     return `/cari?${new URLSearchParams(Object.entries(all).filter(([, v]) => v))}`;
   };
 
@@ -54,6 +58,14 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       error = e instanceof ApiError ? e.message : 'Gagal memuat jadwal';
     }
   }
+  // Lebih dari 1 penumpang: sembunyikan jadwal yang kursi kosongnya (dalam satu varian) kurang dari
+  // jumlah penumpang. Jadwal yang memang habis tetap tampil abu-abu seperti biasa.
+  let hiddenForPax = 0;
+  if (passengers && passengers > 1) {
+    const before = trips.length;
+    trips = trips.filter((t) => seatsLeft(t) === 0 || maxFreeInOneTier(t.tiers) >= passengers);
+    hiddenForPax = before - trips.length;
+  }
   // Yang masih ada kursinya di atas, lalu sesuai urutan yang dipilih
   trips = [...trips].sort((a, b) => Number(seatsLeft(b) > 0) - Number(seatsLeft(a) > 0) || SORTS[sort].fn(a, b));
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i));
@@ -67,7 +79,10 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
             <h1 className="truncate text-xl font-extrabold sm:text-2xl">
               {from || '…'} → {to || '…'}
             </h1>
-            <p className="text-sm text-[#cfe9e6]">{shortDate(date)} · {trips.length} jadwal</p>
+            <p className="text-sm text-[#cfe9e6]">
+              {shortDate(date)}
+              {passengers ? ` · ${passengers} penumpang` : ''} · {trips.length} jadwal
+            </p>
             {(boardPoint || dropPoint) && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {boardPoint && <PointChip label={`Naik di ${boardPoint}`} clear={href({ boardPoint: '' })} />}
@@ -132,12 +147,20 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       <div className="grid gap-2.5">
         {trips.map((t) =>
           seatsLeft(t) > 0 ? (
-            <TripCard key={`${t.id}-${t.date}`} trip={t} href={`/checkout?${new URLSearchParams({ tripId: t.id, from, to, date, ...points })}`} />
+            <TripCard key={`${t.id}-${t.date}`} trip={t} href={`/checkout?${new URLSearchParams({ tripId: t.id, from, to, date, ...points, ...paxParam })}`} />
           ) : (
             <TripCard key={`${t.id}-${t.date}`} trip={t} />
           ),
         )}
       </div>
+      {hiddenForPax > 0 && passengers && (
+        <p className="rounded-xl bg-white px-4 py-3 text-center text-sm text-muted">
+          {hiddenForPax} jadwal lain tidak ditampilkan karena sisa kursinya kurang dari {passengers}.{' '}
+          <Link href={href({ [PASSENGER_PARAM]: '1' })} className="font-bold text-brand underline">
+            Tampilkan untuk 1 penumpang
+          </Link>
+        </p>
+      )}
     </section>
   );
 }
