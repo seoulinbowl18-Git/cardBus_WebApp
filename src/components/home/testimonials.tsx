@@ -77,10 +77,9 @@ function TestimonialCard({ t }: { t: Testimonial }) {
             <Stars rating={t.rating} />
             <span className="truncate text-sm font-bold text-ink">{t.name}</span>
           </span>
-          <span className="mt-0.5 block truncate text-xs text-muted">
-            {t.poName}
-            {route ? ` · ${route}` : ''}
-          </span>
+          {(t.poName || route) && (
+            <span className="mt-0.5 block truncate text-xs text-muted">{[t.poName, route].filter(Boolean).join(' · ')}</span>
+          )}
         </figcaption>
       </div>
     </figure>
