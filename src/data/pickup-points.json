@@ -23,7 +23,7 @@
     },
     {
       "name": "Yogyakarta",
-      "aliases": ["Kota Yogyakarta"],
+      "aliases": ["Kota Yogyakarta", "Yogjakarta"],
       "points": [
         { "name": "Sleman", "area": "Sleman", "board": true, "drop": true },
         { "name": "Jl. Janti", "area": "Yogyakarta", "board": true, "drop": true },
