@@ -49,7 +49,7 @@ export function SearchRow({ onClick, ariaLabel, ariaHasPopup, ariaExpanded, icon
       aria-haspopup={ariaHasPopup}
       aria-expanded={ariaExpanded}
       aria-label={ariaLabel}
-      className={`group flex w-full min-w-0 items-center gap-3.5 rounded-[18px] px-3 py-3 text-left transition-colors duration-150 hover:bg-[#f3f8f8] active:bg-teal-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${active ? 'bg-teal-soft/70' : ''} ${className}`}
+      className={`group flex w-full min-w-0 items-center gap-3.5 rounded-[18px] border px-3 py-3 text-left transition-colors duration-150 hover:border-brand/30 hover:bg-[#f7fbfb] active:bg-teal-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${active ? 'border-brand/40 bg-teal-soft/70' : 'border-line bg-white'} ${className}`}
     >
       <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-teal-soft text-brand transition-colors group-hover:bg-[#d5ecea]">
         {icon}

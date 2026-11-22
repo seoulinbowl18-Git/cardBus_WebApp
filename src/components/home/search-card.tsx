@@ -66,19 +66,19 @@ export function SearchCard() {
       {to.point && <input type="hidden" name="dropPoint" value={to.point} />}
       <input type="hidden" name="date" value={date} />
 
-      {/* HP: baris bertumpuk dengan garis pemisah. Desktop (lg): satu bilah dengan pemisah vertikal. */}
+      {/* Tiap blok (Dari / Ke / Tanggal) berbingkai tipis; HP bertumpuk, desktop (lg) berjajar dengan jarak kecil. */}
       <div className="flex flex-col lg:flex-row lg:items-center">
         <LocationField label="Dari" value={from} onChange={setFrom} locations={locations} className="lg:flex-1 lg:pr-8" />
 
-        {/* Garis pemisah + tombol tukar yang menempel di atasnya. Di HP tombol sejajar kolom chevron
-            (chevron ada di tengah baris, jadi tidak bertabrakan) sehingga teks tidak tertutup. */}
-        <div className="relative mx-3 h-px shrink-0 bg-line lg:mx-1 lg:h-12 lg:w-px">
+        {/* Jarak antar-blok + tombol tukar di atasnya. Di HP tombol sejajar kolom chevron (chevron ada di
+            tengah blok, jadi tidak bertabrakan) sehingga teks tidak tertutup. */}
+        <div className="relative h-2 shrink-0 lg:h-auto lg:w-3 lg:self-stretch">
           <button
             type="button"
             onClick={swap}
             aria-label="Tukar asal dan tujuan"
             title="Tukar asal dan tujuan"
-            className="absolute -right-3 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-line bg-white text-brand shadow-[0_4px_12px_-4px_rgba(4,46,49,0.25)] transition hover:border-brand/40 hover:bg-teal-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 active:scale-95 lg:left-1/2 lg:right-auto lg:-translate-x-1/2"
+            className="absolute right-0 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-line bg-white text-brand shadow-[0_4px_12px_-4px_rgba(4,46,49,0.25)] transition hover:border-brand/40 hover:bg-teal-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 active:scale-95 lg:left-1/2 lg:right-auto lg:-translate-x-1/2"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5 lg:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M8 4v16m0-16L4.5 7.5M8 4l3.5 3.5M16 20V4m0 16-3.5-3.5M16 20l3.5-3.5" />
@@ -88,7 +88,7 @@ export function SearchCard() {
 
         <LocationField label="Ke" value={to} onChange={setTo} locations={locations} className="lg:flex-1 lg:pl-8" />
 
-        <div className="mx-3 h-px shrink-0 bg-line lg:mx-1 lg:h-12 lg:w-px" aria-hidden />
+        <div className="h-2 shrink-0 lg:h-auto lg:w-3" aria-hidden />
 
         {/* TANGGAL PERJALANAN: kalender CardBus (tanggal lampau gelap & tidak bisa dipilih) */}
         <div className="relative min-w-0 lg:flex-1">
