@@ -23,6 +23,49 @@ const CityIcon = () => (
   </svg>
 );
 
+interface SearchRowProps {
+  onClick: () => void;
+  ariaLabel: string;
+  ariaHasPopup?: 'dialog';
+  ariaExpanded?: boolean;
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  detail: React.ReactNode;
+  /** Ditandai aktif (mis. kalender sedang terbuka). */
+  active?: boolean;
+  className?: string;
+}
+
+/**
+ * Satu baris di kartu cari (Dari / Ke / Tanggal): lingkaran ikon teal, label kecil, nilai tegas,
+ * keterangan sekunder, dan chevron. Area sentuh selebar baris (tinggi ≥ 72px).
+ */
+export function SearchRow({ onClick, ariaLabel, ariaHasPopup, ariaExpanded, icon, label, value, detail, active = false, className = '' }: SearchRowProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-haspopup={ariaHasPopup}
+      aria-expanded={ariaExpanded}
+      aria-label={ariaLabel}
+      className={`group flex w-full min-w-0 items-center gap-3.5 rounded-[18px] px-3 py-3 text-left transition-colors duration-150 hover:bg-[#f3f8f8] active:bg-teal-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${active ? 'bg-teal-soft/70' : ''} ${className}`}
+    >
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-teal-soft text-brand transition-colors group-hover:bg-[#d5ecea]">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[11px] font-bold uppercase leading-none tracking-[0.08em] text-faint">{label}</span>
+        <span className="mt-1.5 block truncate text-xl font-extrabold leading-tight text-ink">{value}</span>
+        <span className="mt-1 block truncate text-[13px] leading-snug text-muted">{detail}</span>
+      </span>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-muted transition-colors group-hover:text-brand" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    </button>
+  );
+}
+
 /**
  * Kotak "Dari" / "Ke" yang bisa diklik (padanan LocationField + PointPickerScreen di mobile).
  * Membuka daftar kota & titik naik/turun dari backend, bisa dicari dengan mengetik.
@@ -33,20 +76,16 @@ export function LocationField({ label, value, locations, onChange, className = '
   const verb = kind === 'board' ? 'naik' : 'turun';
   return (
     <>
-      <button
-        type="button"
+      <SearchRow
         onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        aria-label={`${label}: ${value.point ? `${value.point}, ${value.city}` : value.city}. Ubah`}
-        className={`group flex min-w-0 flex-col justify-center rounded-2xl border border-line bg-white px-4 py-2.5 text-left transition hover:border-brand focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 ${className}`}
-      >
-        <span className="block text-[11px] font-semibold uppercase tracking-wider text-faint">{label}</span>
-        <span className="mt-0.5 flex min-w-0 items-center gap-2">
-          <PinIcon className="h-5 w-5 shrink-0 text-brand" />
-          <span className="truncate text-lg font-semibold leading-tight text-ink">{value.point ?? value.city}</span>
-        </span>
-        <span className="mt-0.5 block truncate pl-7 text-xs text-faint">{value.point ? value.city : `Semua titik ${verb} di ${value.city}`}</span>
-      </button>
+        ariaHasPopup="dialog"
+        ariaLabel={`${label}: ${value.point ? `${value.point}, ${value.city}` : value.city}. Ubah`}
+        icon={<PinIcon className="h-[22px] w-[22px]" />}
+        label={label}
+        value={value.point ?? value.city}
+        detail={value.point ? value.city : `Semua titik ${verb} di ${value.city}`}
+        className={className}
+      />
       {open && (
         <PickerDialog
           title={kind === 'board' ? 'Pilih titik naik' : 'Pilih titik turun'}
