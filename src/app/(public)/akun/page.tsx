@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { HeaderBackdrop } from '@/components/home/hero-backdrop';
 import { Icon, type IconName } from '@/components/icons';
 import { ApiError } from '@/lib/api/client';
 import { orderApi, userApi } from '@/lib/api/endpoints';
@@ -135,7 +136,9 @@ function ProfileHeader({ user, busy, onSave }: { user: User | null; busy: boolea
   }
 
   return (
-    <section className="-mx-4 -mt-8 rounded-b-[24px] bg-brand px-5 pb-5 pt-7 text-white sm:mx-0 sm:mt-0 sm:rounded-[24px]">
+    <section className="relative isolate -mx-4 -mt-8 overflow-hidden rounded-b-[24px] bg-brand px-5 pb-5 pt-7 text-white sm:mx-0 sm:mt-0 sm:rounded-[24px]">
+      {/* Latar teal senada Hero Beranda (dekoratif, di belakang konten) */}
+      <HeaderBackdrop ticketClassName="right-5 top-6 sm:right-8 sm:top-7" />
       <div className="flex items-center gap-4">
         <div className="relative shrink-0">
           {user?.photoUrl ? (

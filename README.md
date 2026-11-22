@@ -59,6 +59,22 @@ service Railway ikut terbawa saat build.
 C ke atas kanan, kode lain (mis. K1) di atas; kursi terisi tampil abu-abu.
 Data baru masuk ke database dengan menjalankan `npm run seed` di backend (upsert, aman diulang).
 
+## Titik naik / turun (pemilih Dari & Ke)
+
+Daftar kota & titik diambil dari `GET /api/locations` (dibangun backend dari rute jadwal tayang); bila backend
+tidak terjangkau dipakai `src/lib/locations-fallback.json`. Keduanya dilengkapi titik kurasi dari
+**`src/data/pickup-points.json`** oleh `withCurated()` di `src/lib/locations.ts`:
+
+- Skema per kota: `name` (nama baku, sama dengan `cityName` backend), `aliases` (kata kunci pencarian, mis.
+  "Kota Malang"), `points[]`: `name`, `area` (label wilayah), `board`, `drop`. Format ini juga dipakai untuk
+  menyelaraskan PWA dan aplikasi Flutter.
+- Tanpa duplikat (nama sama di kota sama). Jumlah rute dari backend; arah naik/turun digabung, dan arah yang
+  hanya ada di data kurasi dicatat di `unscheduled` → di pemilih tampil lencana **"Belum ada jadwal"**.
+  Pencarian ke titik itu kosong sampai ada jadwal dengan nama titik yang sama persis.
+- Pemilih menampilkan hierarki: kota → "Semua titik … di Kota" → **Terminal** (nama diawali "Terminal") dan
+  **Agen & titik lainnya**; lencana **Terpopuler** hanya untuk titik dengan rute terbanyak (> 0).
+- Nama kota memakai "Yogyakarta" (tanpa alias/label "Jogja").
+
 ## Admin Pusat (`/admin`)
 
 Panel pemilik CardBus, terpisah dari tampilan penumpang: layout, menu, dan sesi sendiri

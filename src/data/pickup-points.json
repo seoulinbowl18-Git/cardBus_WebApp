@@ -1,0 +1,60 @@
+{
+  "$comment": "Titik naik/turun kurasi CardBus. Digabung ke GET /api/locations dan ke locations-fallback.json oleh src/lib/locations.ts (tanpa duplikat; data jadwal dari backend selalu diutamakan). Skema per kota: name (nama baku, sama dengan cityName backend), aliases (kata kunci pencarian tambahan), points[]: name, area (wilayah tampilan; juga menimpa label wilayah titik yang sudah ada), board (bisa jadi titik naik), drop (bisa jadi titik turun). Format ini sengaja datar & seragam agar mudah disalin ke webapp (main) dan aplikasi Flutter.",
+  "version": 1,
+  "cities": [
+    {
+      "name": "Malang",
+      "aliases": ["Kota Malang"],
+      "points": [
+        { "name": "Terminal Arjosari", "area": "Malang", "board": true, "drop": true },
+        { "name": "Kepanjen", "area": "Kab. Malang", "board": true, "drop": true },
+        { "name": "Kantor Pattimura", "area": "Malang", "board": true, "drop": true },
+        { "name": "Singosari", "area": "Kab. Malang", "board": true, "drop": true },
+        { "name": "Lawang", "area": "Kab. Malang", "board": true, "drop": true },
+        { "name": "Karangkates", "area": "Kab. Malang", "board": true, "drop": true },
+        { "name": "Jl. Abd. Saleh", "area": "Malang", "board": true, "drop": true },
+        { "name": "Kantor Pusat Malang", "area": "Malang", "board": true, "drop": true },
+        { "name": "Sumber Pucung", "area": "Kab. Malang", "board": true, "drop": true },
+        { "name": "Lintas Kota Malang", "area": "Malang", "board": true, "drop": true },
+        { "name": "Lowokwaru", "area": "Malang", "board": true, "drop": true },
+        { "name": "Pakis", "area": "Kab. Malang", "board": true, "drop": true },
+        { "name": "Malang Town Square", "area": "Malang", "board": true, "drop": true }
+      ]
+    },
+    {
+      "name": "Yogyakarta",
+      "aliases": ["Kota Yogyakarta", "Yogjakarta"],
+      "points": [
+        { "name": "Sleman", "area": "Sleman", "board": true, "drop": true },
+        { "name": "Jl. Janti", "area": "Yogyakarta", "board": true, "drop": true },
+        { "name": "Terminal Jombor", "area": "Sleman", "board": true, "drop": true },
+        { "name": "Terminal Giwangan", "area": "Yogyakarta", "board": true, "drop": true },
+        { "name": "Jl. Ringroad", "area": "Yogyakarta", "board": true, "drop": true },
+        { "name": "Umbulharjo", "area": "Yogyakarta", "board": true, "drop": true },
+        { "name": "Kulon Progo", "area": "Kulon Progo", "board": true, "drop": true },
+        { "name": "Office Yogyakarta", "area": "Yogyakarta", "board": true, "drop": true },
+        { "name": "Jl. MT Haryono", "area": "Yogyakarta", "board": true, "drop": true },
+        { "name": "Terminal Wates", "area": "Kulon Progo", "board": true, "drop": true }
+      ]
+    },
+    {
+      "name": "Semarang",
+      "aliases": ["Kota Semarang"],
+      "points": [
+        { "name": "Terminal Terboyo", "area": "Semarang", "board": true, "drop": true },
+        { "name": "Terminal Banyumanik", "area": "Semarang", "board": true, "drop": true },
+        { "name": "Krapyak", "area": "Semarang", "board": true, "drop": true },
+        { "name": "Tembalang", "area": "Semarang", "board": true, "drop": true },
+        { "name": "Ungaran", "area": "Kab. Semarang", "board": true, "drop": true },
+        { "name": "Terminal Bawen", "area": "Kab. Semarang", "board": true, "drop": true },
+        { "name": "Terminal Ambarawa", "area": "Kab. Semarang", "board": true, "drop": true },
+        { "name": "Jatingaleh", "area": "Semarang", "board": true, "drop": true },
+        { "name": "Genuk", "area": "Semarang", "board": true, "drop": true },
+        { "name": "Terminal Ungaran", "area": "Kab. Semarang", "board": true, "drop": true },
+        { "name": "Jl. Sukun Raya", "area": "Semarang", "board": true, "drop": true },
+        { "name": "Pucanggading", "area": "Semarang", "board": true, "drop": true },
+        { "name": "Mangkang", "area": "Semarang", "board": true, "drop": true }
+      ]
+    }
+  ]
+}
