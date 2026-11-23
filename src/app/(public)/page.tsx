@@ -3,6 +3,7 @@ import { FeaturedGrid, FeatureStrip, Greeting, PromoRow, SectionTitle } from '@/
 import { HeroBackdrop } from '@/components/home/hero-backdrop';
 import { AppBanner } from '@/components/home/app-banner';
 import { SearchCard } from '@/components/home/search-card';
+import { Faq } from '@/components/home/faq';
 import { Testimonials } from '@/components/home/testimonials';
 import { loadBanners } from '@/lib/banners';
 import { loadFeatured } from '@/lib/featured';
@@ -72,6 +73,8 @@ export default async function HomePage() {
       <AppBanner />
 
       <Testimonials items={testimonials} />
+
+      <Faq />
 
       <p className="text-center text-xs text-faint">
         Sudah pesan? <Link href="/pesanan" className="font-semibold text-brand">Lihat Tiket Saya</Link>
