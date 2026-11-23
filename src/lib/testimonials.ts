@@ -5,7 +5,7 @@ import type { FeaturedProduct } from '@/lib/home-content';
 const REVALIDATE_SECONDS = 300;
 const TIMEOUT_MS = 5000;
 const MAX_POS = 6;
-const PER_PO = 6;
+const PER_PO = 20;
 const MAX_ITEMS = 8;
 const MIN_RATING = 4;
 const MIN_COMMENT = 12;
