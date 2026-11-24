@@ -28,7 +28,14 @@ export function AppBanner({ background = null }: { background?: AppBannerBackgro
       {/* Gambar latar musiman (lib/app-banner-background.ts) + lapisan gelap agar teks & panel tetap terbaca */}
       {background && (
         <>
-          <Image src={background.src} alt={background.alt} fill sizes="(min-width: 1024px) 992px, 100vw" className="-z-20 object-cover" />
+          <Image
+            src={background.src}
+            alt={background.alt}
+            fill
+            sizes="(min-width: 1024px) 992px, 100vw"
+            className="-z-20 object-cover"
+            style={{ objectPosition: background.position }}
+          />
           <div
             className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(4,46,49,0.88)_0%,rgba(4,46,49,0.6)_32%,rgba(4,46,49,0.1)_55%,rgba(4,46,49,0.55)_100%)] lg:bg-[linear-gradient(90deg,rgba(4,46,49,0.92)_0%,rgba(4,46,49,0.72)_34%,rgba(4,46,49,0.08)_58%,rgba(4,46,49,0.3)_100%)]"
             aria-hidden
@@ -64,6 +71,11 @@ export function AppBanner({ background = null }: { background?: AppBannerBackgro
         {/* Ilustrasi bus di jalan pesisir */}
         <div className="relative h-[180px] sm:h-[220px] md:absolute md:right-0 md:top-0 md:left-[46%] md:h-[240px] lg:bottom-0 lg:top-0 lg:left-[30%] lg:right-[420px] lg:h-auto xl:right-[450px]" aria-hidden>
           {!background && <AppBannerArt className="absolute inset-0 h-full w-full" />}
+          {background?.caption && (
+            <span className="absolute inset-0 grid place-items-center px-2 text-center text-[2.4rem] font-black uppercase leading-none tracking-[0.04em] text-[#e11d24] [text-shadow:0_2px_10px_rgba(255,255,255,0.55),0_1px_2px_rgba(60,10,10,0.35)] sm:text-5xl lg:place-items-end lg:pb-7 lg:pr-5 lg:text-[1.65rem]">
+              {background.caption}
+            </span>
+          )}
         </div>
 
         {/* Kanan: panel unduh */}
