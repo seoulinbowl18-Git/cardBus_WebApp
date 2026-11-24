@@ -28,7 +28,7 @@ const CATEGORIES: Category[] = [
       },
       {
         q: 'Apakah aplikasi CardBus sudah tersedia di Google Play dan App Store?',
-        a: 'Saat ini layanan CardBus sudah bisa dipakai lewat web app di browser, dan web app ini bisa dipasang ke layar utama HP seperti aplikasi. Ketersediaan di toko aplikasi resmi akan dibuka bertahap.',
+        a: 'Saat ini layanan CardBus sudah bisa dipakai lewat web app di browser HP maupun komputer. Ketersediaan di toko aplikasi resmi akan dibuka bertahap.',
       },
       {
         q: 'Bagaimana cara menghubungi layanan bantuan CardBus?',
