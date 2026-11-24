@@ -37,7 +37,7 @@ export function AppBanner({ background = null }: { background?: AppBannerBackgro
             style={{ objectPosition: background.position }}
           />
           <div
-            className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(4,46,49,0.88)_0%,rgba(4,46,49,0.6)_32%,rgba(4,46,49,0.1)_55%,rgba(4,46,49,0.55)_100%)] lg:bg-[linear-gradient(90deg,rgba(4,46,49,0.92)_0%,rgba(4,46,49,0.72)_34%,rgba(4,46,49,0.08)_58%,rgba(4,46,49,0.3)_100%)]"
+            className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(4,46,49,0.62)_0%,rgba(4,46,49,0.28)_30%,rgba(4,46,49,0)_48%,rgba(4,46,49,0)_62%,rgba(4,46,49,0.38)_100%)] lg:bg-[linear-gradient(90deg,rgba(4,46,49,0.7)_0%,rgba(4,46,49,0.4)_30%,rgba(4,46,49,0)_50%,rgba(4,46,49,0)_100%)]"
             aria-hidden
           />
         </>
@@ -79,7 +79,11 @@ export function AppBanner({ background = null }: { background?: AppBannerBackgro
         </div>
 
         {/* Kanan: panel unduh */}
-        <div className="relative z-10 mx-3 mb-3 rounded-[22px] bg-[#053f43]/70 p-4 ring-1 ring-white/10 backdrop-blur-md sm:mx-5 sm:mb-5 sm:p-5 lg:absolute lg:inset-y-5 lg:right-5 lg:m-0 lg:flex lg:w-[400px] lg:items-center xl:w-[430px]">
+        <div
+          className={`relative z-10 mx-3 mb-3 p-4 sm:mx-5 sm:mb-5 sm:p-5 lg:absolute lg:inset-y-5 lg:right-5 lg:m-0 lg:flex lg:w-[400px] lg:items-center xl:w-[430px] ${
+            background ? '[text-shadow:0_1px_6px_rgba(0,0,0,0.55)]' : 'rounded-[22px] bg-[#053f43]/70 ring-1 ring-white/10 backdrop-blur-md'
+          }`}
+        >
           <div className="flex w-full items-center gap-5">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold sm:text-[15px]">Unduh aplikasi CardBus di</p>
@@ -88,7 +92,7 @@ export function AppBanner({ background = null }: { background?: AppBannerBackgro
                 <StoreButton href={config.appStoreUrl} kind="apple" />
               </div>
             </div>
-            <div className="hidden w-px shrink-0 bg-white/15 md:block" aria-hidden />
+            {!background && <div className="hidden w-px shrink-0 bg-white/15 md:block" aria-hidden />}
             <div className="hidden w-[120px] shrink-0 flex-col items-center md:flex">
               <p className="text-center text-xs font-semibold text-white/85">{qrLabel}</p>
               <div className="mt-2.5 rounded-xl bg-white p-2 shadow-sm">
