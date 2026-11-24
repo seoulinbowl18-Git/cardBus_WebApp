@@ -6,6 +6,7 @@ import { SearchCard } from '@/components/home/search-card';
 import { Faq } from '@/components/home/faq';
 import { Testimonials } from '@/components/home/testimonials';
 import { loadBanners } from '@/lib/banners';
+import { activeAppBannerBackground } from '@/lib/app-banner-background';
 import { loadFeatured } from '@/lib/featured';
 import { loadTestimonials } from '@/lib/testimonials';
 
@@ -70,7 +71,7 @@ export default async function HomePage() {
         <FeatureStrip />
       </section>
 
-      <AppBanner />
+      <AppBanner background={activeAppBannerBackground()} />
 
       <Testimonials items={testimonials} />
 

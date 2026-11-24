@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 import { config } from '@/lib/config';
+import type { AppBannerBackground } from '@/lib/app-banner-background';
 import { AppBannerArt } from './app-banner-art';
 
 /**
@@ -13,7 +14,7 @@ import { AppBannerArt } from './app-banner-art';
  * rating/unduhan. QR mengarah ke tautan Play Store bila ada, selain itu ke web app CardBus ini (bisa
  * dipasang sebagai aplikasi/PWA). QR disembunyikan di HP (tidak bisa memindai layar sendiri).
  */
-export function AppBanner() {
+export function AppBanner({ background = null }: { background?: AppBannerBackground | null }) {
   const [origin, setOrigin] = useState('');
   useEffect(() => setOrigin(window.location.origin), []);
   const qrValue = config.playStoreUrl || (origin ? `${origin}/` : '');
@@ -24,6 +25,16 @@ export function AppBanner() {
       aria-labelledby="app-banner-title"
       className="relative isolate overflow-hidden rounded-[28px] bg-[linear-gradient(110deg,#064e52_0%,#076f6a_35%,#087f78_60%,#10a394_100%)] text-white shadow-[0_24px_48px_-28px_rgba(4,46,49,0.7)]"
     >
+      {/* Gambar latar musiman (lib/app-banner-background.ts) + lapisan gelap agar teks & panel tetap terbaca */}
+      {background && (
+        <>
+          <Image src={background.src} alt={background.alt} fill sizes="(min-width: 1024px) 992px, 100vw" className="-z-20 object-cover" />
+          <div
+            className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(4,46,49,0.88)_0%,rgba(4,46,49,0.6)_32%,rgba(4,46,49,0.1)_55%,rgba(4,46,49,0.55)_100%)] lg:bg-[linear-gradient(90deg,rgba(4,46,49,0.92)_0%,rgba(4,46,49,0.72)_34%,rgba(4,46,49,0.08)_58%,rgba(4,46,49,0.3)_100%)]"
+            aria-hidden
+          />
+        </>
+      )}
       {/* Cahaya keemasan lembut & lengkung terang */}
       <div className="pointer-events-none absolute -bottom-24 -left-16 -z-10 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(255,194,71,0.35)_0%,rgba(255,194,71,0)_70%)]" aria-hidden />
       <div className="pointer-events-none absolute -right-32 -top-40 -z-10 h-96 w-96 rounded-full bg-white/[0.05]" aria-hidden />
@@ -52,7 +63,7 @@ export function AppBanner() {
 
         {/* Ilustrasi bus di jalan pesisir */}
         <div className="relative h-[180px] sm:h-[220px] md:absolute md:right-0 md:top-0 md:left-[46%] md:h-[240px] lg:bottom-0 lg:top-0 lg:left-[30%] lg:right-[420px] lg:h-auto xl:right-[450px]" aria-hidden>
-          <AppBannerArt className="absolute inset-0 h-full w-full" />
+          {!background && <AppBannerArt className="absolute inset-0 h-full w-full" />}
         </div>
 
         {/* Kanan: panel unduh */}
