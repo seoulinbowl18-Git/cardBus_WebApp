@@ -17,6 +17,13 @@ const PinIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
     <path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z" />
   </svg>
 );
+/** Pin solid dengan lubang putih untuk lencana kotak cari (meniru desain mobile). */
+export const BadgePinIcon = ({ className = 'h-6 w-6' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden>
+    <path d="M12 1.8a7.4 7.4 0 0 0-7.4 7.4c0 5.6 7.4 13 7.4 13s7.4-7.4 7.4-13A7.4 7.4 0 0 0 12 1.8Z" fill="currentColor" />
+    <circle cx="12" cy="9.2" r="2.9" fill="#fff" />
+  </svg>
+);
 const CityIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" aria-hidden>
     <path d="M3 21h18M5 21V8l5-3v16M10 21V3l9 5v13M13 10h3M13 14h3M13 18h3M6.5 12h1M6.5 16h1" />
@@ -29,6 +36,8 @@ interface SearchRowProps {
   ariaHasPopup?: 'dialog';
   ariaExpanded?: boolean;
   icon: React.ReactNode;
+  /** Warna lencana ikon: teal (bawaan) atau emas (mis. kotak "Ke"). */
+  tone?: 'teal' | 'gold';
   label: string;
   value: string;
   detail: React.ReactNode;
@@ -41,7 +50,12 @@ interface SearchRowProps {
  * Satu baris di kartu cari (Dari / Ke / Tanggal): lingkaran ikon teal, label kecil, nilai tegas,
  * keterangan sekunder, dan chevron. Area sentuh selebar baris (tinggi ≥ 72px).
  */
-export function SearchRow({ onClick, ariaLabel, ariaHasPopup, ariaExpanded, icon, label, value, detail, active = false, className = '' }: SearchRowProps) {
+const BADGE = {
+  teal: 'text-brand bg-[radial-gradient(circle_at_32%_28%,#ffffff_0%,#e6f5f3_48%,#cdeae6_100%)] shadow-[0_8px_16px_-8px_rgba(8,127,120,0.55),inset_0_1px_0_rgba(255,255,255,0.95)]',
+  gold: 'text-[#f5a000] bg-[radial-gradient(circle_at_32%_28%,#ffffff_0%,#fff4dc_48%,#ffe6ad_100%)] shadow-[0_8px_16px_-8px_rgba(214,150,0,0.55),inset_0_1px_0_rgba(255,255,255,0.95)]',
+};
+
+export function SearchRow({ onClick, ariaLabel, ariaHasPopup, ariaExpanded, icon, tone = 'teal', label, value, detail, active = false, className = '' }: SearchRowProps) {
   return (
     <button
       type="button"
@@ -51,7 +65,7 @@ export function SearchRow({ onClick, ariaLabel, ariaHasPopup, ariaExpanded, icon
       aria-label={ariaLabel}
       className={`group flex w-full min-w-0 items-center gap-3.5 rounded-[18px] border px-3 py-3 text-left transition-colors duration-150 hover:border-brand/30 hover:bg-[#f7fbfb] active:bg-teal-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${active ? 'border-brand/40 bg-teal-soft/70' : 'border-line bg-white'} ${className}`}
     >
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-teal-soft text-brand transition-colors group-hover:bg-[#d5ecea]">
+      <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ring-1 ring-white transition-transform duration-150 group-hover:scale-105 ${BADGE[tone]}`}>
         {icon}
       </span>
       <span className="min-w-0 flex-1">
@@ -80,7 +94,8 @@ export function LocationField({ label, value, locations, onChange, className = '
         onClick={() => setOpen(true)}
         ariaHasPopup="dialog"
         ariaLabel={`${label}: ${value.point ? `${value.point}, ${value.city}` : value.city}. Ubah`}
-        icon={<PinIcon className="h-[22px] w-[22px]" />}
+        icon={<BadgePinIcon className="h-6 w-6" />}
+        tone={kind === 'board' ? 'teal' : 'gold'}
         label={label}
         value={value.point ?? value.city}
         detail={value.point ? value.city : `Semua titik ${verb} di ${value.city}`}

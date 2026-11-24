@@ -41,9 +41,7 @@ export function HeroBackdrop({ className = '' }: { className?: string }) {
         <path d="M520 120 C 820 70, 1120 64, 1440 86 V120 Z" fill="white" fillOpacity={0.08} />
       </svg>
 
-      {/* Bus samar: di ruang kosong kanan sapaan (di atas kartu cari). Disembunyikan di bawah md karena
-          tidak ada ruang kosong tanpa menutupi teks. */}
-      <Bus className="absolute right-[5%] top-[100px] hidden h-[78px] w-[183px] text-white/[0.10] md:block lg:top-[104px]" />
+      {/* Foto bus ada di HeroPhotos (app/(public)/page.tsx), di ruang kanan sapaan. */}
     </div>
   );
 }
@@ -126,36 +124,6 @@ function Ticket({ className }: { className: string }) {
         d="M8 0h84a8 8 0 0 1 8 8v15a8 8 0 0 0 0 16v15a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V39a8 8 0 0 0 0-16V8a8 8 0 0 1 8-8Z
            M38 14h24a5 5 0 0 1 5 5v22a3 3 0 0 1-3 3h-1v4a2 2 0 0 1-4 0v-4H41v4a2 2 0 0 1-4 0v-4h-1a3 3 0 0 1-3-3V19a5 5 0 0 1 5-5Z
            M38 19v10h24V19H38Zm2 16a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm20 0a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"
-      />
-    </svg>
-  );
-}
-
-/**
- * Siluet bus antarkota (coach) menghadap kanan: bodi dengan lengkung roda, pita jendela panjang,
- * kaca depan melengkung, spion, dan garis samping. Bagian bolong memakai evenodd.
- */
-function Bus({ className }: { className: string }) {
-  return (
-    <svg className={className} viewBox="0 0 216 92" fill="currentColor">
-      {/* Bodi + lubang: pita jendela, kaca depan, garis samping, lampu */}
-      <path
-        fillRule="evenodd"
-        d="M14 6H168C182 6 192 12 199 24L208 42C211 48 212 54 212 60V70C212 74 209 76 205 76H186A18 18 0 0 0 150 76H62A18 18 0 0 0 26 76H12C8 76 6 73 6 69V14C6 9 9 6 14 6Z
-           M16 16H160V40H16Z
-           M166 16H178C186 16 192 20 196 27L204 44H166Z
-           M10 50H205V53H10Z
-           M196 59H207V64H196Z"
-      />
-      {/* Tiang jendela */}
-      <path d="M50 16h3v24h-3zM86 16h3v24h-3zM122 16h3v24h-3z" />
-      {/* Spion */}
-      <path d="M199 17c6 0 9 4 9 11h-2.5c0-5-2.5-8.5-6.5-8.5Z" />
-      {/* Roda (dengan velg bolong) */}
-      <path
-        fillRule="evenodd"
-        d="M44 64a13 13 0 1 1 0 26a13 13 0 1 1 0-26Zm0 8a5 5 0 1 0 0 10a5 5 0 1 0 0-10Z
-           M168 64a13 13 0 1 1 0 26a13 13 0 1 1 0-26Zm0 8a5 5 0 1 0 0 10a5 5 0 1 0 0-10Z"
       />
     </svg>
   );
