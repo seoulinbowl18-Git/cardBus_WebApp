@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 import { config } from '@/lib/config';
+import type { AppBannerBackground } from '@/lib/app-banner-background';
 import { AppBannerArt } from './app-banner-art';
 
 /**
@@ -13,7 +14,7 @@ import { AppBannerArt } from './app-banner-art';
  * rating/unduhan. QR mengarah ke tautan Play Store bila ada, selain itu ke web app CardBus ini (bisa
  * dipasang sebagai aplikasi/PWA). QR disembunyikan di HP (tidak bisa memindai layar sendiri).
  */
-export function AppBanner() {
+export function AppBanner({ background = null }: { background?: AppBannerBackground | null }) {
   const [origin, setOrigin] = useState('');
   useEffect(() => setOrigin(window.location.origin), []);
   const qrValue = config.playStoreUrl || (origin ? `${origin}/` : '');
@@ -24,6 +25,23 @@ export function AppBanner() {
       aria-labelledby="app-banner-title"
       className="relative isolate overflow-hidden rounded-[28px] bg-[linear-gradient(110deg,#064e52_0%,#076f6a_35%,#087f78_60%,#10a394_100%)] text-white shadow-[0_24px_48px_-28px_rgba(4,46,49,0.7)]"
     >
+      {/* Gambar latar musiman (lib/app-banner-background.ts) + lapisan gelap agar teks & panel tetap terbaca */}
+      {background && (
+        <>
+          <Image
+            src={background.src}
+            alt={background.alt}
+            fill
+            sizes="(min-width: 1024px) 992px, 100vw"
+            className="-z-20 object-cover"
+            style={{ objectPosition: background.position }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(4,46,49,0.62)_0%,rgba(4,46,49,0.28)_30%,rgba(4,46,49,0)_48%,rgba(4,46,49,0)_62%,rgba(4,46,49,0.38)_100%)] lg:bg-[linear-gradient(90deg,rgba(4,46,49,0.7)_0%,rgba(4,46,49,0.4)_30%,rgba(4,46,49,0)_50%,rgba(4,46,49,0)_100%)]"
+            aria-hidden
+          />
+        </>
+      )}
       {/* Cahaya keemasan lembut & lengkung terang */}
       <div className="pointer-events-none absolute -bottom-24 -left-16 -z-10 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(255,194,71,0.35)_0%,rgba(255,194,71,0)_70%)]" aria-hidden />
       <div className="pointer-events-none absolute -right-32 -top-40 -z-10 h-96 w-96 rounded-full bg-white/[0.05]" aria-hidden />
@@ -52,11 +70,20 @@ export function AppBanner() {
 
         {/* Ilustrasi bus di jalan pesisir */}
         <div className="relative h-[180px] sm:h-[220px] md:absolute md:right-0 md:top-0 md:left-[46%] md:h-[240px] lg:bottom-0 lg:top-0 lg:left-[30%] lg:right-[420px] lg:h-auto xl:right-[450px]" aria-hidden>
-          <AppBannerArt className="absolute inset-0 h-full w-full" />
+          {!background && <AppBannerArt className="absolute inset-0 h-full w-full" />}
+          {background?.caption && (
+            <span className="absolute inset-0 grid place-items-center px-2 text-center text-[2.4rem] font-black uppercase leading-none tracking-[0.04em] text-[#e11d24] [text-shadow:0_2px_10px_rgba(255,255,255,0.55),0_1px_2px_rgba(60,10,10,0.35)] sm:text-5xl lg:place-items-end lg:pb-7 lg:pr-5 lg:text-[1.65rem]">
+              {background.caption}
+            </span>
+          )}
         </div>
 
         {/* Kanan: panel unduh */}
-        <div className="relative z-10 mx-3 mb-3 rounded-[22px] bg-[#053f43]/70 p-4 ring-1 ring-white/10 backdrop-blur-md sm:mx-5 sm:mb-5 sm:p-5 lg:absolute lg:inset-y-5 lg:right-5 lg:m-0 lg:flex lg:w-[400px] lg:items-center xl:w-[430px]">
+        <div
+          className={`relative z-10 mx-3 mb-3 p-4 sm:mx-5 sm:mb-5 sm:p-5 lg:absolute lg:inset-y-5 lg:right-5 lg:m-0 lg:flex lg:w-[400px] lg:items-center xl:w-[430px] ${
+            background ? '[text-shadow:0_1px_6px_rgba(0,0,0,0.55)]' : 'rounded-[22px] bg-[#053f43]/70 ring-1 ring-white/10 backdrop-blur-md'
+          }`}
+        >
           <div className="flex w-full items-center gap-5">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold sm:text-[15px]">Unduh aplikasi CardBus di</p>
@@ -65,7 +92,7 @@ export function AppBanner() {
                 <StoreButton href={config.appStoreUrl} kind="apple" />
               </div>
             </div>
-            <div className="hidden w-px shrink-0 bg-white/15 md:block" aria-hidden />
+            {!background && <div className="hidden w-px shrink-0 bg-white/15 md:block" aria-hidden />}
             <div className="hidden w-[120px] shrink-0 flex-col items-center md:flex">
               <p className="text-center text-xs font-semibold text-white/85">{qrLabel}</p>
               <div className="mt-2.5 rounded-xl bg-white p-2 shadow-sm">
