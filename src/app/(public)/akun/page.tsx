@@ -236,7 +236,7 @@ function ProfileForm({ user, busy, onSave }: { user: User; busy: boolean; onSave
           <Icon name="verified" className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-brand" />
         </span>
       </label>
-      <button disabled={busy} className="w-full rounded-lg bg-brand py-3 font-bold text-white hover:bg-brand-dark disabled:opacity-60">
+      <button disabled={busy} className="w-full rounded-full bg-[linear-gradient(180deg,#ffd662_0%,#ffc247_46%,#f5a91c_100%)] py-3 font-extrabold text-ink shadow-[inset_0_2px_0_rgba(255,255,255,0.6),inset_0_-3px_0_#ffffff,inset_0_-6px_4px_-3px_rgba(170,100,0,0.45),0_10px_20px_-12px_rgba(214,140,0,0.8)] transition hover:brightness-105 active:scale-[0.98] disabled:opacity-60">
         {busy ? 'Menyimpan…' : 'Simpan perubahan'}
       </button>
     </form>
@@ -312,10 +312,22 @@ function Menu({ children }: { children: ReactNode }) {
   return <div className="divide-y divide-line overflow-hidden rounded-2xl bg-white shadow-sm">{children}</div>;
 }
 
+/** Warna lencana ikon menu per fungsi (pastel + ikon berwarna), agar menu Akun tidak didominasi teal. */
+const MENU_TONE: Partial<Record<IconName, string>> = {
+  share: 'bg-[#f1eafe] text-[#7c3aed]', // Ajak Teman: ungu
+  voucher: 'bg-[#fff1e6] text-[#e8590c]', // Voucher: oranye
+  gift: 'bg-[#ffe9ee] text-[#e11d48]', // Promo: merah muda
+  support: 'bg-[#e6f0ff] text-[#2563eb]', // Hubungi CS: biru
+  refund: 'bg-[#e6f7ee] text-[#16a34a]', // Pengembalian dana: hijau
+  doc: 'bg-[#eef1f4] text-[#475569]', // Syarat & Ketentuan: abu
+  shield: 'bg-[#e8edfb] text-[#3730a3]', // Kebijakan Privasi: biru tua
+};
+
 function MenuItem(props: { icon: IconName; title: string; subtitle?: string; badge?: string; href?: string; onClick?: () => void }) {
+  const tone = MENU_TONE[props.icon] ?? 'bg-teal-soft text-brand';
   const body = (
     <>
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-teal-soft text-brand"><Icon name={props.icon} className="h-[18px] w-[18px]" /></span>
+      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${tone}`}><Icon name={props.icon} className="h-[18px] w-[18px]" /></span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold">{props.title}</span>
         {props.subtitle && <span className="block text-xs text-muted">{props.subtitle}</span>}
