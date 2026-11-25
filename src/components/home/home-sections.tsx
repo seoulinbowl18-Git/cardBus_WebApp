@@ -44,16 +44,25 @@ export function SectionTitle({ title, subtitle, trailing }: { title: string; sub
   );
 }
 
+/** Pil emas bergaya tombol "Cari tiket": gradasi emas, kilau atas, lis putih di dalam sisi bawah, bayangan emas. */
+const GOLD_PILL =
+  'rounded-full bg-[linear-gradient(180deg,#ffd662_0%,#ffc247_46%,#f5a91c_100%)] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-2px_0_#ffffff,inset_0_-4px_3px_-2px_rgba(170,100,0,0.45),0_6px_14px_-8px_rgba(214,140,0,0.85)]';
+
 function Tag({ children, tone = 'gold' }: { children: React.ReactNode; tone?: 'gold' | 'red' | 'teal' }) {
-  const cls = { gold: 'bg-gold text-ink', red: 'bg-promo text-white', teal: 'bg-brand text-white' }[tone];
-  return <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold tracking-wide ${cls}`}>{children}</span>;
+  const cls = { gold: `${GOLD_PILL} px-2.5 pb-[3px] pt-[2px]`, red: 'rounded-md bg-promo px-2 py-0.5 text-white', teal: 'rounded-md bg-brand px-2 py-0.5 text-white' }[tone];
+  return <span className={`inline-block text-[10px] font-extrabold tracking-wide ${cls}`}>{children}</span>;
 }
 
 /** Banner promo: foto + gradasi teal gelap + teks + tombol emas (PromoBannerCard mobile). */
 export function PromoBanner({ promo, onSoon, tall, preview }: { promo: Promo; onSoon: (m: string) => void; tall?: boolean; preview?: boolean }) {
   const route = promo.from && promo.to && !promo.soonMessage;
   const cta = (
-    <span className="mt-2 inline-flex rounded-full bg-gold px-3 py-1.5 text-xs font-extrabold text-ink">{promo.ctaLabel} →</span>
+    <span className={`mt-2 inline-flex items-center gap-1 ${GOLD_PILL} py-2 pl-4 pr-3 text-xs font-extrabold transition group-hover:brightness-105`}>
+      {promo.ctaLabel}
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="m9 6 6 6-6 6" />
+      </svg>
+    </span>
   );
   const body = (
     <>
