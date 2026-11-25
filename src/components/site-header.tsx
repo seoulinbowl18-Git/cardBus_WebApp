@@ -25,8 +25,8 @@ export function SiteHeader() {
           <Image src="/brand/cardbus-header.png" alt="CardBus" width={552} height={100} priority className="h-6 w-auto sm:h-8" />
         </Link>
         <div className="flex min-w-0 items-center gap-1 whitespace-nowrap text-sm font-medium sm:gap-2">
-          <button onClick={openCsHelp} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-brand transition hover:bg-teal-soft">
-            <Icon name="support" className="h-[18px] w-[18px]" />
+          <button onClick={openCsHelp} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-ink transition hover:bg-[#fff4dc]">
+            <Icon name="support" className="h-[18px] w-[18px] text-[#d98e04]" />
             Bantuan
           </button>
           <NavLink href="/pesanan" icon="ticket" label="Tiket Saya" on={pathname.startsWith('/pesanan')} cls={navCls} />
