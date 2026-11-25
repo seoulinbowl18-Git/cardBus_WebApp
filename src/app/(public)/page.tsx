@@ -4,6 +4,7 @@ import { HeroBackdrop } from '@/components/home/hero-backdrop';
 import { AppBanner } from '@/components/home/app-banner';
 import { SearchCard } from '@/components/home/search-card';
 import { Faq } from '@/components/home/faq';
+import { HeroPhotos } from '@/components/home/hero-photos';
 import { Testimonials } from '@/components/home/testimonials';
 import { loadBanners } from '@/lib/banners';
 import { activeAppBannerBackground } from '@/lib/app-banner-background';
@@ -31,9 +32,13 @@ export default async function HomePage() {
           <HeroBackdrop className="rounded-b-[28px] sm:rounded-none" />
           {/* pt memberi ruang pita ornamen atas; tanpa pb: hero berakhir sejajar bagian bawah kolom isian kartu */}
           <div className="relative mx-auto grid max-w-[1360px] grid-cols-[minmax(0,1fr)] items-center gap-5 px-4 pt-12 sm:px-8 sm:pt-[88px] lg:pt-[92px]">
-            <div className="space-y-2">
-              <Greeting />
-              <p className="max-w-md text-sm text-white/85 sm:text-base">Tiket Bus, Lebih Mudah. Pilih kursi sendiri, bayar QRIS atau Virtual Account.</p>
+            {/* Sapaan + foto bus bergantian di kanan (memudar ke teal di kiri & bawah) */}
+            <div className="relative min-h-[150px] sm:min-h-[150px] lg:min-h-[176px]">
+              <HeroPhotos className="absolute -right-4 -top-12 bottom-[-20px] w-[66%] sm:-right-8 sm:-top-[88px] sm:w-[58%] lg:-top-[92px] lg:w-[46%] lg:max-w-[640px]" />
+              <div className="relative space-y-2 pr-[34%] [text-shadow:0_1px_8px_rgba(4,46,49,0.45)] sm:pr-[42%] lg:pr-0">
+                <Greeting />
+                <p className="max-w-md text-sm text-white/85 sm:text-base">Tiket Bus, Lebih Mudah. Pilih kursi sendiri, bayar QRIS atau Virtual Account.</p>
+              </div>
             </div>
             {/* Kartu menjuntai keluar hero sebesar baris tombol (margin negatif = pb section di atas) */}
             <div className="relative -mb-[76px] min-w-0 sm:-mb-[84px]">

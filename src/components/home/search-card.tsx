@@ -99,8 +99,18 @@ export function SearchCard() {
             ariaLabel={`Tanggal perjalanan: ${p.dow}, ${p.day} ${p.mon}. Ubah`}
             active={pickingDate}
             icon={
-              <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="currentColor" aria-hidden>
-                <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm13 8H4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9ZM7 12h2v2H7v-2Zm4 0h2v2h-2v-2Zm4 0h2v2h-2v-2Zm-8 4h2v2H7v-2Zm4 0h2v2h-2v-2Z" />
+              <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden>
+                <rect x="2.5" y="4" width="19" height="17.5" rx="3.2" fill="currentColor" />
+                <rect x="6.4" y="1.8" width="2.4" height="5" rx="1.2" fill="currentColor" stroke="#fff" strokeWidth="1" />
+                <rect x="15.2" y="1.8" width="2.4" height="5" rx="1.2" fill="currentColor" stroke="#fff" strokeWidth="1" />
+                <rect x="4.6" y="9" width="14.8" height="10.4" rx="1.6" fill="#fff" />
+                <g fill="currentColor">
+                  <rect x="6.6" y="10.9" width="2.6" height="2.4" rx=".5" />
+                  <rect x="10.7" y="10.9" width="2.6" height="2.4" rx=".5" />
+                  <rect x="14.8" y="10.9" width="2.6" height="2.4" rx=".5" />
+                  <rect x="6.6" y="15" width="2.6" height="2.4" rx=".5" />
+                  <rect x="10.7" y="15" width="2.6" height="2.4" rx=".5" />
+                </g>
               </svg>
             }
             label="Tanggal perjalanan"
