@@ -62,8 +62,9 @@ function Tag({ children, tone = 'gold' }: { children: React.ReactNode; tone?: 'g
 /** Banner promo: foto + gradasi teal gelap + teks + tombol emas (PromoBannerCard mobile). */
 export function PromoBanner({ promo, onSoon, tall, preview }: { promo: Promo; onSoon: (m: string) => void; tall?: boolean; preview?: boolean }) {
   const route = promo.from && promo.to && !promo.soonMessage;
+  // Tombol kecil "Cek ›" di kanan bawah kartu (Promo & Info maupun Promo spesial).
   const cta = (
-    <span className={`mt-2 inline-flex items-center gap-1 ${GOLD_PILL} py-2 pl-4 pr-3 text-[13px] font-extrabold transition group-hover:brightness-105`}>
+    <span className={`absolute bottom-3 right-3 inline-flex items-center gap-1 ${GOLD_PILL} py-1.5 pl-3 pr-2 text-xs font-extrabold transition group-hover:brightness-105`}>
       {/* Label tombol diseragamkan "Cek ›" (teks CTA dari admin tidak ditampilkan di tombol) */}
       Cek
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -82,8 +83,8 @@ export function PromoBanner({ promo, onSoon, tall, preview }: { promo: Promo; on
         <span><Tag tone="glass">{promo.tag}</Tag></span>
         <p className="mt-1 line-clamp-2 text-base font-extrabold leading-snug text-white">{promo.title}</p>
         <p className="truncate text-[11px] text-[#dcefee]">{promo.subtitle}</p>
-        <span>{cta}</span>
       </div>
+      {cta}
     </>
   );
   const cls = `group relative block overflow-hidden rounded-[18px] bg-[#0f857d] text-left ${tall ? 'h-[188px]' : 'h-[150px]'}`;
@@ -186,7 +187,7 @@ export function FeaturedGrid({ products, preview }: { products: FeaturedProduct[
                     <>
                       {p.oldPrice && <span className="mr-1 text-[11px] text-faint line-through">{formatRupiah(p.oldPrice)}</span>}
                       <span className="block text-[11px] text-muted">mulai</span>
-                      <span className="text-base font-extrabold text-brand">{formatRupiah(p.price)}</span>
+                      <span className="text-base font-extrabold text-[#e8590c]">{formatRupiah(p.price)}</span>
                     </>
                   )}
                 </div>
@@ -222,7 +223,7 @@ export function FeatureStrip() {
     <div className="grid grid-cols-2 gap-3 rounded-2xl bg-white p-4 shadow-sm md:grid-cols-4">
       {FEATURES.map((f) => (
         <div key={f.label} className="flex items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal-soft text-brand">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[radial-gradient(circle_at_32%_28%,#ffffff_0%,#fff4dc_48%,#ffe6ad_100%)] text-[#d98e04] shadow-[0_6px_12px_-8px_rgba(214,150,0,0.6),inset_0_1px_0_rgba(255,255,255,0.95)] ring-1 ring-white">
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               {f.icon}
             </svg>
