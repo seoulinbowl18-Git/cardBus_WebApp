@@ -62,13 +62,9 @@ function Tag({ children, tone = 'gold' }: { children: React.ReactNode; tone?: 'g
 /** Banner promo: foto + gradasi teal gelap + teks + tombol emas (PromoBannerCard mobile). */
 export function PromoBanner({ promo, onSoon, tall, preview }: { promo: Promo; onSoon: (m: string) => void; tall?: boolean; preview?: boolean }) {
   const route = promo.from && promo.to && !promo.soonMessage;
-  // Kartu besar (Promo & Info): tombol di bawah teks. Kartu kecil (Promo spesial): tombol kecil di kanan bawah.
+  // Tombol kecil "Cek ›" di kanan bawah kartu (Promo & Info maupun Promo spesial).
   const cta = (
-    <span
-      className={`inline-flex items-center gap-1 ${GOLD_PILL} font-extrabold transition group-hover:brightness-105 ${
-        tall ? 'mt-2 py-2 pl-4 pr-3 text-[13px]' : 'absolute bottom-3 right-3 py-1.5 pl-3 pr-2 text-xs'
-      }`}
-    >
+    <span className={`absolute bottom-3 right-3 inline-flex items-center gap-1 ${GOLD_PILL} py-1.5 pl-3 pr-2 text-xs font-extrabold transition group-hover:brightness-105`}>
       {/* Label tombol diseragamkan "Cek ›" (teks CTA dari admin tidak ditampilkan di tombol) */}
       Cek
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -87,9 +83,8 @@ export function PromoBanner({ promo, onSoon, tall, preview }: { promo: Promo; on
         <span><Tag tone="glass">{promo.tag}</Tag></span>
         <p className="mt-1 line-clamp-2 text-base font-extrabold leading-snug text-white">{promo.title}</p>
         <p className="truncate text-[11px] text-[#dcefee]">{promo.subtitle}</p>
-        {tall && <span>{cta}</span>}
       </div>
-      {!tall && cta}
+      {cta}
     </>
   );
   const cls = `group relative block overflow-hidden rounded-[18px] bg-[#0f857d] text-left ${tall ? 'h-[188px]' : 'h-[150px]'}`;
