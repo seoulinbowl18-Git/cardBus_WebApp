@@ -4,14 +4,29 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const TABS: { href: string; label: string; icon: string; overlay?: string; match: (p: string) => boolean }[] = [
+type Tab = {
+  href: string;
+  label: string;
+  /** Kata tambahan di label yang muncul dengan animasi saat tab aktif (mis. "Akun" + "Saya"). */
+  labelExtra?: string;
+  icon: string;
+  /** Lapisan animasi di atas ikon (mis. tiket keluar dari mesin di ikon Beranda). */
+  overlay?: string;
+  /** Kelas animasi ikon saat tab aktif (lihat globals.css). */
+  iconAnim?: string;
+  match: (p: string) => boolean;
+};
+
+const TABS: Tab[] = [
   { href: '/', label: 'Beranda', icon: '/icons/navigation/home_kiosk_3d.png', overlay: '/icons/navigation/home_kiosk_ticket.png', match: (p) => p === '/' || p.startsWith('/cari') },
   { href: '/pesanan', label: 'Tiket Saya', icon: '/icons/navigation/ticket_3d.png', match: (p) => p.startsWith('/pesanan') },
   { href: '/promo', label: 'Promo', icon: '/icons/navigation/promo_3d.png', match: (p) => p.startsWith('/promo') },
   {
     href: '/akun',
     label: 'Akun',
+    labelExtra: 'Saya',
     icon: '/icons/navigation/account_3d.png',
+    iconAnim: 'nav-avatar',
     match: (p) => p.startsWith('/akun') || p.startsWith('/masuk') || p.startsWith('/syarat') || p.startsWith('/kebijakan'),
   },
 ];
@@ -45,14 +60,32 @@ export function BottomNav() {
                 <span className="grid h-11 w-12 place-items-center transition-transform duration-200 ease-out group-active:scale-90">
                   {/* key berganti saat aktif → animasi pantul diputar ulang */}
                   <span key={on ? 'on' : 'off'} className={`relative block transition-[width,height] duration-200 ease-out ${on ? 'nav-pop h-[42px] w-[42px]' : 'h-9 w-9'}`}>
-                    <Image src={t.icon} alt="" width={42} height={42} sizes="42px" className="h-full w-full object-contain drop-shadow-[0_2px_3px_rgba(4,46,49,0.18)]" />
+                    <Image
+                      src={t.icon}
+                      alt=""
+                      width={42}
+                      height={42}
+                      sizes="42px"
+                      className={`h-full w-full object-contain drop-shadow-[0_2px_3px_rgba(4,46,49,0.18)] ${on && t.iconAnim ? t.iconAnim : ''}`}
+                    />
                     {/* Lapisan animasi (mis. tiket keluar dari mesin di ikon Beranda); diam bila tab tidak aktif */}
                     {t.overlay && (
                       <Image src={t.overlay} alt="" width={42} height={42} sizes="42px" className={`absolute inset-0 h-full w-full object-contain ${on ? 'nav-ticket' : ''}`} />
                     )}
                   </span>
                 </span>
-                <span className="mt-0.5 leading-none group-focus-visible:underline">{t.label}</span>
+                <span className="mt-0.5 whitespace-nowrap leading-none group-focus-visible:underline">
+                  {t.label}
+                  {t.labelExtra && (
+                    <>
+                      {' '}
+                      {/* key berganti saat aktif → kata tambahan muncul ulang dengan animasi */}
+                      <span key={on ? 'on' : 'off'} className={`inline-block ${on ? 'nav-word' : ''}`}>
+                        {t.labelExtra}
+                      </span>
+                    </>
+                  )}
+                </span>
                 <span
                   className={`mt-1.5 h-[3px] rounded-full bg-brand transition-all duration-200 ease-out ${on ? 'w-8 opacity-100' : 'w-0 opacity-0'}`}
                   aria-hidden
