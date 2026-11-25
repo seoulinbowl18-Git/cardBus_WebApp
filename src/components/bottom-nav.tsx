@@ -4,8 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const TABS: { href: string; label: string; icon: string; match: (p: string) => boolean }[] = [
-  { href: '/', label: 'Beranda', icon: '/icons/navigation/home_3d.png', match: (p) => p === '/' || p.startsWith('/cari') },
+const TABS: { href: string; label: string; icon: string; overlay?: string; match: (p: string) => boolean }[] = [
+  { href: '/', label: 'Beranda', icon: '/icons/navigation/home_kiosk_3d.png', overlay: '/icons/navigation/home_kiosk_ticket.png', match: (p) => p === '/' || p.startsWith('/cari') },
   { href: '/pesanan', label: 'Tiket Saya', icon: '/icons/navigation/ticket_3d.png', match: (p) => p.startsWith('/pesanan') },
   { href: '/promo', label: 'Promo', icon: '/icons/navigation/promo_3d.png', match: (p) => p.startsWith('/promo') },
   {
@@ -44,8 +44,12 @@ export function BottomNav() {
               >
                 <span className="grid h-11 w-12 place-items-center transition-transform duration-200 ease-out group-active:scale-90">
                   {/* key berganti saat aktif → animasi pantul diputar ulang */}
-                  <span key={on ? 'on' : 'off'} className={`block transition-[width,height] duration-200 ease-out ${on ? 'nav-pop h-[42px] w-[42px]' : 'h-9 w-9'}`}>
+                  <span key={on ? 'on' : 'off'} className={`relative block transition-[width,height] duration-200 ease-out ${on ? 'nav-pop h-[42px] w-[42px]' : 'h-9 w-9'}`}>
                     <Image src={t.icon} alt="" width={42} height={42} sizes="42px" className="h-full w-full object-contain drop-shadow-[0_2px_3px_rgba(4,46,49,0.18)]" />
+                    {/* Lapisan animasi (mis. tiket keluar dari mesin di ikon Beranda); diam bila tab tidak aktif */}
+                    {t.overlay && (
+                      <Image src={t.overlay} alt="" width={42} height={42} sizes="42px" className={`absolute inset-0 h-full w-full object-contain ${on ? 'nav-ticket' : ''}`} />
+                    )}
                   </span>
                 </span>
                 <span className="mt-0.5 leading-none group-focus-visible:underline">{t.label}</span>
