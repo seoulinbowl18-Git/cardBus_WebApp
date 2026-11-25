@@ -57,8 +57,9 @@ function Tag({ children, tone = 'gold' }: { children: React.ReactNode; tone?: 'g
 export function PromoBanner({ promo, onSoon, tall, preview }: { promo: Promo; onSoon: (m: string) => void; tall?: boolean; preview?: boolean }) {
   const route = promo.from && promo.to && !promo.soonMessage;
   const cta = (
-    <span className={`mt-2 inline-flex items-center gap-1 ${GOLD_PILL} py-2 pl-4 pr-3 text-xs font-extrabold transition group-hover:brightness-105`}>
-      {promo.ctaLabel}
+    <span className={`mt-2 inline-flex items-center gap-1 ${GOLD_PILL} py-2 pl-4 pr-3 text-[13px] font-extrabold transition group-hover:brightness-105`}>
+      {/* Label tombol diseragamkan "Cek ›" (teks CTA dari admin tidak ditampilkan di tombol) */}
+      Cek
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="m9 6 6 6-6 6" />
       </svg>
