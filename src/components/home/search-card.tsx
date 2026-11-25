@@ -121,12 +121,12 @@ export function SearchCard() {
         </div>
       </div>
 
-      {/* Cari Tiket: di tengah di bawah kolom (seperti web app); emas, teks dark teal; status tekan, nonaktif, memuat */}
+      {/* Cari tiket: pil emas bergradasi + kilau + lis putih di dalam sisi bawah pil (seperti desain mobile), ikon cari di kiri & › di kanan; status tekan, nonaktif, memuat */}
       <div className="mt-2 flex justify-center px-1 pb-1 sm:mt-3">
         <button
           disabled={sameCity || searching}
           aria-busy={searching}
-          className="flex h-14 w-full items-center justify-center gap-2.5 rounded-[18px] bg-gold px-10 text-[17px] font-extrabold text-brand-dark shadow-[0_12px_24px_-12px_rgba(186,128,0,0.8)] transition duration-150 hover:bg-[#ffb92e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-dark/50 focus-visible:ring-offset-2 active:scale-[0.98] active:shadow-none disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100 sm:w-auto sm:min-w-[300px] [&:disabled:not([aria-busy=true])]:opacity-50"
+          className="flex h-[60px] w-full items-center justify-center gap-3 rounded-full bg-[linear-gradient(180deg,#ffd662_0%,#ffc247_46%,#f5a91c_100%)] px-10 text-[19px] font-extrabold tracking-tight text-ink shadow-[inset_0_2px_0_rgba(255,255,255,0.6),inset_0_-4px_0_#ffffff,inset_0_-7px_5px_-3px_rgba(170,100,0,0.45),0_14px_26px_-12px_rgba(214,140,0,0.8)] transition duration-150 hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-dark/50 focus-visible:ring-offset-2 active:scale-[0.98] active:shadow-[inset_0_2px_0_rgba(255,255,255,0.5),inset_0_-2px_0_rgba(255,255,255,0.8),0_8px_16px_-10px_rgba(214,140,0,0.7)] disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100 sm:w-auto sm:min-w-[320px] [&:disabled:not([aria-busy=true])]:opacity-50"
         >
           {searching ? (
             <svg viewBox="0 0 24 24" className="h-5 w-5 animate-spin motion-reduce:animate-none" fill="none" aria-hidden>
@@ -134,12 +134,17 @@ export function SearchCard() {
               <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
             </svg>
           ) : (
-            <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" aria-hidden>
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" aria-hidden>
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
           )}
-          {searching ? 'Mencari jadwal…' : 'Cari Tiket'}
+          {searching ? 'Mencari jadwal…' : 'Cari tiket'}
+          {!searching && (
+            <svg viewBox="0 0 24 24" className="-ml-0.5 h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          )}
         </button>
       </div>
       {sameCity && <p className="mt-1 px-3 pb-1 text-xs font-semibold text-red-700">Kota asal dan tujuan tidak boleh sama.</p>}
