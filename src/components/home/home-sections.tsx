@@ -48,8 +48,14 @@ export function SectionTitle({ title, subtitle, trailing }: { title: string; sub
 const GOLD_PILL =
   'rounded-full bg-[linear-gradient(180deg,#ffd662_0%,#ffc247_46%,#f5a91c_100%)] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-2px_0_#ffffff,inset_0_-4px_3px_-2px_rgba(170,100,0,0.45),0_6px_14px_-8px_rgba(214,140,0,0.85)]';
 
-function Tag({ children, tone = 'gold' }: { children: React.ReactNode; tone?: 'gold' | 'red' | 'teal' }) {
-  const cls = { gold: `${GOLD_PILL} px-2.5 pb-[3px] pt-[2px]`, red: 'rounded-md bg-promo px-2 py-0.5 text-white', teal: 'rounded-md bg-brand px-2 py-0.5 text-white' }[tone];
+function Tag({ children, tone = 'gold' }: { children: React.ReactNode; tone?: 'gold' | 'red' | 'teal' | 'glass' }) {
+  const cls = {
+    gold: `${GOLD_PILL} px-2.5 pb-[3px] pt-[2px]`,
+    red: 'rounded-md bg-promo px-2 py-0.5 text-white',
+    teal: 'rounded-md bg-brand px-2 py-0.5 text-white',
+    // kaca buram: label di atas foto promo, agar emas hanya pada tombol "Cek ›"
+    glass: 'rounded-full bg-white/[0.16] px-2.5 py-[3px] text-white ring-1 ring-inset ring-white/40 backdrop-blur-md [text-shadow:0_1px_2px_rgba(0,0,0,0.25)]',
+  }[tone];
   return <span className={`inline-block text-[10px] font-extrabold tracking-wide ${cls}`}>{children}</span>;
 }
 
@@ -73,7 +79,7 @@ export function PromoBanner({ promo, onSoon, tall, preview }: { promo: Promo; on
       )}
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,46,49,0.94)_0%,rgba(4,46,49,0.7)_50%,rgba(4,46,49,0)_85%)]" />
       <div className="relative flex h-full w-2/3 flex-col justify-center p-4">
-        <span><Tag>{promo.tag}</Tag></span>
+        <span><Tag tone="glass">{promo.tag}</Tag></span>
         <p className="mt-1 line-clamp-2 text-base font-extrabold leading-snug text-white">{promo.title}</p>
         <p className="truncate text-[11px] text-[#dcefee]">{promo.subtitle}</p>
         <span>{cta}</span>
