@@ -45,7 +45,7 @@ export function TripCard({ trip, href }: { trip: Trip; href?: string }) {
           {tier && (
             <div className="text-right">
               {promo && <p className="text-[11px] text-faint line-through">{formatRupiah(tier.oldPrice!)}</p>}
-              <p className={`text-base font-extrabold ${promo ? 'text-promo' : 'text-brand'}`}>{formatRupiah(tier.price)}</p>
+              <p className={`text-base font-extrabold ${promo ? 'text-promo' : 'text-[#e8590c]'}`}>{formatRupiah(tier.price)}</p>
               <p className="text-[10px] text-faint">/kursi</p>
             </div>
           )}
